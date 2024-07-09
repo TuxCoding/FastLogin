@@ -42,7 +42,7 @@ public class AsyncScheduler extends AbstractAsyncScheduler {
 
     public AsyncScheduler(Logger logger, Executor processingPool) {
         super(logger, processingPool);
-        logger.info("Using legacy scheduler");
+        logger.info("Using legacy platform scheduler for using an older Java version");
     }
 
     @Override
