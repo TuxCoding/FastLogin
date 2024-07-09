@@ -39,6 +39,7 @@ import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.BukkitConverters;
 import com.comphenix.protocol.wrappers.Converters;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
+import com.comphenix.protocol.wrappers.WrappedProfilePublicKey.WrappedProfileKeyData;
 import com.github.games647.fastlogin.bukkit.BukkitLoginSession;
 import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
 import com.github.games647.fastlogin.bukkit.listener.protocollib.packet.ClientPublicKey;
@@ -48,7 +49,6 @@ import com.mojang.datafixers.util.Either;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.util.AttributeKey;
-import lombok.val;
 import org.bukkit.entity.Player;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.jetbrains.annotations.NotNull;
@@ -245,8 +245,9 @@ public class ProtocolLibListener extends PacketAdapter {
             // public key is sent separate
             clientKey = Optional.empty();
         } else {
-            val profileKey = packet.getOptionals(BukkitConverters.getWrappedPublicKeyDataConverter())
-                    .optionRead(0);
+            Optional<Optional<WrappedProfileKeyData>> profileKey = packet.getOptionals(
+                            BukkitConverters.getWrappedPublicKeyDataConverter()
+                    ).optionRead(0);
 
             clientKey = profileKey.flatMap(Function.identity()).flatMap(data -> {
                 Instant expires = data.getExpireTime();

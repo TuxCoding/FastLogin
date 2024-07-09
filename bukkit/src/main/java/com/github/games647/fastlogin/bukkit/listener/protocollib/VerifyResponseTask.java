@@ -50,7 +50,6 @@ import com.github.games647.fastlogin.bukkit.BukkitLoginSession;
 import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
 import com.github.games647.fastlogin.bukkit.InetUtils;
 import com.github.games647.fastlogin.bukkit.listener.protocollib.packet.ClientPublicKey;
-import lombok.val;
 import org.bukkit.entity.Player;
 
 import javax.crypto.Cipher;
@@ -307,7 +306,7 @@ public class VerifyResponseTask implements Runnable {
             startPacket.getStrings().write(0, username);
 
             EquivalentConverter<WrappedProfileKeyData> converter = BukkitConverters.getWrappedPublicKeyDataConverter();
-            val wrappedKey = Optional.ofNullable(clientKey).map(key ->
+            Optional<WrappedProfileKeyData> wrappedKey = Optional.ofNullable(clientKey).map(key ->
                     new WrappedProfileKeyData(clientKey.expiry(), clientKey.key(), clientKey.signature())
             );
 

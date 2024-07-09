@@ -28,7 +28,6 @@ package com.github.games647.fastlogin.bukkit.listener.protocollib;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import lombok.val;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -37,7 +36,7 @@ public class Base64Adapter extends TypeAdapter<byte[]> {
 
     @Override
     public void write(JsonWriter out, byte[] value) throws IOException {
-        val encoded = Base64.getEncoder().encodeToString(value);
+        String encoded = Base64.getEncoder().encodeToString(value);
         out.value(encoded);
     }
 

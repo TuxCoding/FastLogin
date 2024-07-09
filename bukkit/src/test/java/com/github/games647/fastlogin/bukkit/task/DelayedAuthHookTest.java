@@ -26,7 +26,6 @@
 package com.github.games647.fastlogin.bukkit.task;
 
 import com.github.games647.fastlogin.core.hooks.AuthPlugin;
-import lombok.val;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +35,7 @@ class DelayedAuthHookTest {
 
     @Test
     void createNewReflectiveInstance() throws ReflectiveOperationException {
-        val authHook = new DelayedAuthHook(null);
+        DelayedAuthHook authHook = new DelayedAuthHook(null);
         assertNotNull(authHook.newInstance(DummyHook.class));
     }
 

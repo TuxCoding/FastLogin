@@ -26,7 +26,7 @@
 package com.github.games647.fastlogin.bukkit;
 
 import com.github.games647.fastlogin.core.CommonUtil;
-import lombok.val;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.junit.jupiter.api.Test;
@@ -37,13 +37,13 @@ class FastLoginBukkitTest {
 
     @Test
     void testRGB() {
-        val message = "&x00002a00002b&lText";
-        val msg = CommonUtil.translateColorCodes(message);
+        String message = "&x00002a00002b&lText";
+        String msg = CommonUtil.translateColorCodes(message);
         assertEquals(msg, "§x00002a00002b§lText");
 
         @SuppressWarnings("deprecation")
-        val components = TextComponent.fromLegacyText(msg);
-        val expected = "{\"bold\":true,\"color\":\"#00a00b\",\"text\":\"Text\"}";
+        BaseComponent[] components = TextComponent.fromLegacyText(msg);
+        String expected = "{\"bold\":true,\"color\":\"#00a00b\",\"text\":\"Text\"}";
         //noinspection deprecation
         assertEquals(ComponentSerializer.toString(components), expected);
     }

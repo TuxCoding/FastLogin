@@ -31,7 +31,6 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Resources;
 import com.google.common.primitives.Longs;
-import lombok.val;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -41,6 +40,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -53,6 +53,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Arrays;
@@ -198,9 +199,9 @@ final class EncryptionUtil {
 
     private static PublicKey loadMojangSessionKey()
             throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        val keyUrl = FastLoginBukkit.class.getClassLoader().getResource("yggdrasil_session_pubkey.der");
-        val keyData = Resources.toByteArray(keyUrl);
-        val keySpec = new X509EncodedKeySpec(keyData);
+        URL keyUrl = FastLoginBukkit.class.getClassLoader().getResource("yggdrasil_session_pubkey.der");
+        byte[] keyData = Resources.toByteArray(keyUrl);
+        KeySpec keySpec = new X509EncodedKeySpec(keyData);
 
         return KeyFactory.getInstance("RSA").generatePublic(keySpec);
     }

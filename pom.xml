@@ -218,14 +218,6 @@
     </build>
 
     <dependencies>
-        <!-- Use lombok to use some newer Java syntax features in Java 8 -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombook.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
