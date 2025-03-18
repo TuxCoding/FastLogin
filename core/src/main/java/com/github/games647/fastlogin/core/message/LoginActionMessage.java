@@ -63,7 +63,7 @@ public class LoginActionMessage implements ChannelMessage {
 
     @Override
     public void readFrom(ByteArrayDataInput input) {
-        this.type = Type.values()[input.readInt()];
+        this.type = Type.values()[input.readByte()];
 
         this.playerName = input.readUTF();
 
@@ -75,7 +75,7 @@ public class LoginActionMessage implements ChannelMessage {
 
     @Override
     public void writeTo(ByteArrayDataOutput output) {
-        output.writeInt(type.ordinal());
+        output.writeByte(type.ordinal());
 
         //Data is sent through a random player. We have to tell the Bukkit version of this plugin the target
         output.writeUTF(playerName);
