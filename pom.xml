@@ -106,7 +106,7 @@
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-                <version>4.5</version>
+                <version>4.6</version>
                 <configuration>
                     <licenseSets>
                         <licenseSet>
@@ -134,7 +134,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
                     <consoleOutput>true</consoleOutput>
@@ -145,7 +145,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>10.17.0</version>
+                        <version>10.18.2</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -162,7 +162,7 @@
             <!-- Require newer versions for Junit5 support -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.5.0</version>
                 <configuration>
                     <!-- Work-around to make multi-release classes discoverable
                     https://issues.apache.org/jira/browse/SUREFIRE-1731 -->
