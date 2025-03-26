@@ -64,4 +64,4 @@ jobs:
 
       - name: Submit Dependency Snapshot
         if: ${{ github.event_name == 'push' }}
-        uses: advanced-security/maven-dependency-submission-action@v4.0.3
+        uses: advanced-security/maven-dependency-submission-action@v4.1.1
