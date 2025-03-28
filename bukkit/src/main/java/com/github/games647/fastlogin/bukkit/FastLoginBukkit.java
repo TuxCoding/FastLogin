@@ -28,6 +28,7 @@ package com.github.games647.fastlogin.bukkit;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.github.games647.fastlogin.bukkit.command.CrackedCommand;
 import com.github.games647.fastlogin.bukkit.command.PremiumCommand;
+import com.github.games647.fastlogin.bukkit.command.DeleteCommand;
 import com.github.games647.fastlogin.bukkit.listener.ConnectionListener;
 import com.github.games647.fastlogin.bukkit.listener.PaperCacheListener;
 import com.github.games647.fastlogin.bukkit.listener.protocollib.ProtocolLibListener;
@@ -155,6 +156,7 @@ public class FastLoginBukkit extends JavaPlugin implements PlatformPlugin<Comman
         //register commands using a unique name
         Optional.ofNullable(getCommand("premium")).ifPresent(c -> c.setExecutor(new PremiumCommand(this)));
         Optional.ofNullable(getCommand("cracked")).ifPresent(c -> c.setExecutor(new CrackedCommand(this)));
+        Optional.ofNullable(getCommand("fldelete")).ifPresent(c -> c.setExecutor(new DeleteCommand(this)));
     }
 
     private boolean initializeFloodgate() {
