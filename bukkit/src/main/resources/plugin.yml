@@ -70,4 +70,4 @@ permissions:
 
     ${project.artifactId}.command.delete:
         description: 'Delete other players profile data'
-        default: true
+        default: false

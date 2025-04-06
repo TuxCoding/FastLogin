@@ -55,19 +55,28 @@ public class DeleteCommand implements TabExecutor {
             return true;
         }
 
+        if (plugin.getBungeeManager().isEnabled()) {
+            sender.sendMessage("Error: Cannot delete profile entries when using BungeeCord!");
+            return false;
+        }
+
         if (args.length < 1) {
             sender.sendMessage("Error: Must supply username to delete!");
             return false;
         }
 
-        int count = plugin.getCore().getStorage().deleteProfile(args[0]);
-        if (!(sender instanceof ConsoleCommandSender)) {
-            if (count == 0) {
-                sender.sendMessage("Error: No profile entries found!");
-            } else {
-                sender.sendMessage("Deleted " + count + " matching profile entries");
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            int count = plugin.getCore().getStorage().deleteProfile(args[0]);
+            if (!(sender instanceof ConsoleCommandSender)) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (count == 0) {
+                        sender.sendMessage("Error: No profile entries found!");
+                    } else {
+                        sender.sendMessage("Deleted " + count + " matching profile entries");
+                    }
+                });
             }
-        }
+        });
 
         return true;
     }
