@@ -76,7 +76,12 @@ public class AsyncToggleMessage implements Runnable {
             ? PremiumToggleReason.COMMAND_OTHER : PremiumToggleReason.COMMAND_SELF;
         core.getPlugin().getProxy().getPluginManager().callEvent(
                 new BungeeFastLoginPremiumToggleEvent(playerProfile, reason));
-        sendMessage("remove-premium");
+
+        if (isPlayerSender && core.getConfig().getBoolean("kick-toggle", true)) {
+            sender.disconnect(TextComponent.fromLegacyText(core.getMessage("remove-premium")));
+        } else {
+            sendMessage("remove-premium");
+        }
     }
 
     private void activatePremium() {

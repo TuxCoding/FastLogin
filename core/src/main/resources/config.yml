@@ -150,10 +150,13 @@ nameChangeCheck: false
 forwardSkin: true
 
 # Displays a warning message that this message SHOULD only be invoked by
-# users who actually are the owner of this account. So not by cracked players
+# users who actually are the owner of this account (and not cracked players)
 #
 # If they still want to invoke the command, they have to invoke /premium again
 premium-warning: true
+
+# Kick players after they confirmed the command from above.
+kick-toggle: true
 
 # ======[[ Spigot+ProtocolLib users only ]]======
 # When set to true, enables the use of alternative session resolver which does not send the server IP

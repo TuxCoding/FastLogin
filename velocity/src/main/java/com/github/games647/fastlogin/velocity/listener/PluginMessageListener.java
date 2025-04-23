@@ -83,12 +83,12 @@ public class PluginMessageListener {
         plugin.getScheduler().runAsync(() -> readMessage(forPlayer, channel, data));
     }
 
-    private void readMessage(Player forPlayer, String channel, byte[] data) {
+    private void readMessage(Player sender, String channel, byte[] data) {
         FastLoginCore<Player, CommandSource, FastLoginVelocity> core = plugin.getCore();
 
         ByteArrayDataInput dataInput = ByteStreams.newDataInput(data);
         if (successChannel.equals(channel)) {
-            onSuccessMessage(forPlayer);
+            onSuccessMessage(sender);
         } else if (changeChannel.equals(channel)) {
             ChangePremiumMessage changeMessage = new ChangePremiumMessage();
             changeMessage.readFrom(dataInput);
@@ -97,19 +97,19 @@ public class PluginMessageListener {
             boolean isSourceInvoker = changeMessage.isSourceInvoker();
             if (changeMessage.shouldEnable()) {
                 Boolean premiumWarning = plugin.getCore().getConfig().get("premium-warning", true);
-                if (playerName.equals(forPlayer.getUsername()) && premiumWarning
-                    && !core.getPendingConfirms().contains(forPlayer.getUniqueId())) {
+                if (playerName.equals(sender.getUsername()) && premiumWarning
+                    && !core.getPendingConfirms().contains(sender.getUniqueId())) {
                     String message = core.getMessage("premium-warning");
-                    forPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
-                    core.getPendingConfirms().add(forPlayer.getUniqueId());
+                    sender.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
+                    core.getPendingConfirms().add(sender.getUniqueId());
                     return;
                 }
 
-                core.getPendingConfirms().remove(forPlayer.getUniqueId());
-                Runnable task = new AsyncToggleMessage(core, forPlayer, playerName, true, isSourceInvoker);
+                core.getPendingConfirms().remove(sender.getUniqueId());
+                Runnable task = new AsyncToggleMessage(core, sender, playerName, true, isSourceInvoker);
                 plugin.getScheduler().runAsync(task);
             } else {
-                Runnable task = new AsyncToggleMessage(core, forPlayer, playerName, false, isSourceInvoker);
+                Runnable task = new AsyncToggleMessage(core, sender, playerName, false, isSourceInvoker);
                 plugin.getScheduler().runAsync(task);
             }
         }

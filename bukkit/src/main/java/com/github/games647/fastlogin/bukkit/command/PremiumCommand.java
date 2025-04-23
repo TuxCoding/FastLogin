@@ -68,7 +68,8 @@ public class PremiumCommand extends ToggleCommand {
             return;
         }
 
-        UUID id = ((Player) sender).getUniqueId();
+        Player player = (Player) sender;
+        UUID id = player.getUniqueId();
         if (plugin.getConfig().getBoolean("premium-warning") && !plugin.getCore().getPendingConfirms().contains(id)) {
             sender.sendMessage(plugin.getCore().getMessage("premium-warning"));
             plugin.getCore().getPendingConfirms().add(id);
@@ -86,10 +87,17 @@ public class PremiumCommand extends ToggleCommand {
             plugin.getScheduler().runAsync(() -> {
                 plugin.getCore().getStorage().save(profile);
                 plugin.getServer().getPluginManager().callEvent(
-                        new BukkitFastLoginPremiumToggleEvent(sender, profile, PremiumToggleReason.COMMAND_SELF));
-            });
+                        new BukkitFastLoginPremiumToggleEvent(sender, profile, PremiumToggleReason.COMMAND_SELF)
+                );
 
-            plugin.getCore().sendLocaleMessage("add-premium", sender);
+                plugin.getScheduler().getSyncExecutor().execute(() -> {
+                    if (plugin.getCore().getConfig().getBoolean("kick-toggle", true)) {
+                        player.kickPlayer(plugin.getCore().getMessage("remove-premium"));
+                    } else {
+                        plugin.getCore().sendLocaleMessage("add-premium", sender);
+                    }
+                });
+            });
         }
     }
 
@@ -117,7 +125,8 @@ public class PremiumCommand extends ToggleCommand {
             plugin.getScheduler().runAsync(() -> {
                 plugin.getCore().getStorage().save(profile);
                 plugin.getServer().getPluginManager().callEvent(
-                        new BukkitFastLoginPremiumToggleEvent(sender, profile, PremiumToggleReason.COMMAND_OTHER));
+                        new BukkitFastLoginPremiumToggleEvent(sender, profile, PremiumToggleReason.COMMAND_OTHER)
+                );
             });
 
             plugin.getCore().sendLocaleMessage("add-premium-other", sender);

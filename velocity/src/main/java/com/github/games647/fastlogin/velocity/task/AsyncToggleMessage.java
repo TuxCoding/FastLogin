@@ -33,29 +33,26 @@ import com.github.games647.fastlogin.velocity.event.VelocityFastLoginPremiumTogg
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class AsyncToggleMessage implements Runnable {
 
     private final FastLoginCore<Player, CommandSource, FastLoginVelocity> core;
-    private final CommandSource sender;
+    private final Player sender;
     private final String senderName;
     private final String targetPlayer;
     private final boolean toPremium;
     private final boolean isPlayerSender;
 
     public AsyncToggleMessage(FastLoginCore<Player, CommandSource, FastLoginVelocity> core,
-                              CommandSource sender, String playerName, boolean toPremium, boolean playerSender) {
+                              Player sender, String playerName, boolean toPremium, boolean playerSender) {
         this.core = core;
         this.sender = sender;
         this.targetPlayer = playerName;
         this.toPremium = toPremium;
         this.isPlayerSender = playerSender;
-        if (sender instanceof Player playSender) {
-            senderName = playSender.getUsername();
-        } else {
-            senderName = "";
-        }
+        this.senderName = sender.getUsername();
     }
 
     @Override
@@ -82,7 +79,14 @@ public class AsyncToggleMessage implements Runnable {
             ? PremiumToggleReason.COMMAND_OTHER : PremiumToggleReason.COMMAND_SELF;
         core.getPlugin().getProxy().getEventManager().fire(
             new VelocityFastLoginPremiumToggleEvent(playerProfile, reason));
-        sendMessage("remove-premium");
+
+        if (isPlayerSender && core.getConfig().getBoolean("kick-toggle", true)) {
+            TextComponent msg = LegacyComponentSerializer.legacyAmpersand()
+                .deserialize(core.getMessage("remove-premium"));
+            sender.disconnect(msg);
+        } else {
+            sendMessage("remove-premium");
+        }
     }
 
     private void activatePremium() {
