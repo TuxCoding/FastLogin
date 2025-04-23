@@ -46,6 +46,7 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.ChannelMessageSink;
@@ -57,7 +58,6 @@ import org.geysermc.geyser.GeyserImpl;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,7 +75,7 @@ public class FastLoginVelocity implements PlatformPlugin<CommandSource> {
     private final ProxyServer server;
     private final Path dataDirectory;
     private final Logger logger;
-    private final ConcurrentMap<InetSocketAddress, VelocityLoginSession> session = new MapMaker().weakKeys().makeMap();
+    private final ConcurrentMap<InboundConnection, VelocityLoginSession> session = new MapMaker().weakKeys().makeMap();
     private static final String PROXY_ID_FILE = "proxyId.txt";
 
     private FastLoginCore<Player, CommandSource, FastLoginVelocity> core;
@@ -175,7 +175,7 @@ public class FastLoginVelocity implements PlatformPlugin<CommandSource> {
         return core;
     }
 
-    public ConcurrentMap<InetSocketAddress, VelocityLoginSession> getSession() {
+    public ConcurrentMap<InboundConnection, VelocityLoginSession> getSession() {
         return session;
     }
 
