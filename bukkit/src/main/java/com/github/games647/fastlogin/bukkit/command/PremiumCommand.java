@@ -86,7 +86,7 @@ public class PremiumCommand extends ToggleCommand {
             plugin.getScheduler().runAsync(() -> {
                 plugin.getCore().getStorage().save(profile);
                 plugin.getServer().getPluginManager().callEvent(
-                        new BukkitFastLoginPremiumToggleEvent(profile, PremiumToggleReason.COMMAND_SELF));
+                        new BukkitFastLoginPremiumToggleEvent(sender, profile, PremiumToggleReason.COMMAND_SELF));
             });
 
             plugin.getCore().sendLocaleMessage("add-premium", sender);
@@ -117,7 +117,7 @@ public class PremiumCommand extends ToggleCommand {
             plugin.getScheduler().runAsync(() -> {
                 plugin.getCore().getStorage().save(profile);
                 plugin.getServer().getPluginManager().callEvent(
-                        new BukkitFastLoginPremiumToggleEvent(profile, PremiumToggleReason.COMMAND_OTHER));
+                        new BukkitFastLoginPremiumToggleEvent(sender, profile, PremiumToggleReason.COMMAND_OTHER));
             });
 
             plugin.getCore().sendLocaleMessage("add-premium-other", sender);
