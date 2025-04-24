@@ -137,6 +137,12 @@
             </snapshots>
         </repository>
 
+        <!-- Passky -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+
         <!-- PlaceholderAPI -->
         <repository>
             <id>placeholderapi</id>
@@ -346,6 +352,14 @@
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.zigazajc007</groupId>
+            <artifactId>Passky</artifactId>
+            <version>v3.0.0</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <!--No maven repository :(-->
