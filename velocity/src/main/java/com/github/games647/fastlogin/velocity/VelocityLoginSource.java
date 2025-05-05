@@ -66,4 +66,8 @@ public class VelocityLoginSource implements LoginSource {
     public InetSocketAddress getAddress() {
         return connection.getRemoteAddress();
     }
+
+    public InboundConnection getConnection() {
+        return connection;
+    }
 }

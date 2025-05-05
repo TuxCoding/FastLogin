@@ -30,6 +30,7 @@ import com.github.games647.fastlogin.bukkit.event.BukkitFastLoginPremiumToggleEv
 import com.github.games647.fastlogin.core.storage.StoredProfile;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import static com.github.games647.fastlogin.core.shared.event.FastLoginPremiumToggleEvent.PremiumToggleReason;
@@ -57,6 +58,7 @@ public class CrackedCommand extends ToggleCommand {
             return;
         }
 
+        Player player = (Player) sender;
         if (forwardCrackedCommand(sender, sender.getName())) {
             return;
         }
@@ -71,7 +73,16 @@ public class CrackedCommand extends ToggleCommand {
             plugin.getScheduler().runAsync(() -> {
                 plugin.getCore().getStorage().save(profile);
                 plugin.getServer().getPluginManager().callEvent(
-                        new BukkitFastLoginPremiumToggleEvent(profile, PremiumToggleReason.COMMAND_OTHER));
+                        new BukkitFastLoginPremiumToggleEvent(sender, profile, PremiumToggleReason.COMMAND_OTHER)
+                );
+
+                plugin.getScheduler().getSyncExecutor().execute(() -> {
+                    if (plugin.getCore().getConfig().getBoolean("kick-toggle", true)) {
+                        player.kickPlayer(plugin.getCore().getMessage("remove-premium"));
+                    } else {
+                        plugin.getCore().sendLocaleMessage("add-premium", sender);
+                    }
+                });
             });
         } else {
             plugin.getCore().sendLocaleMessage("not-premium", sender);
@@ -104,7 +115,7 @@ public class CrackedCommand extends ToggleCommand {
             plugin.getScheduler().runAsync(() -> {
                 plugin.getCore().getStorage().save(profile);
                 plugin.getServer().getPluginManager().callEvent(
-                        new BukkitFastLoginPremiumToggleEvent(profile, PremiumToggleReason.COMMAND_OTHER));
+                        new BukkitFastLoginPremiumToggleEvent(sender, profile, PremiumToggleReason.COMMAND_OTHER));
             });
         }
     }

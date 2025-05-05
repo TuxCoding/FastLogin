@@ -27,6 +27,7 @@ package com.github.games647.fastlogin.bukkit.event;
 
 import com.github.games647.fastlogin.core.shared.event.FastLoginPremiumToggleEvent;
 import com.github.games647.fastlogin.core.storage.StoredProfile;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -34,11 +35,15 @@ import org.jetbrains.annotations.NotNull;
 public class BukkitFastLoginPremiumToggleEvent extends Event implements FastLoginPremiumToggleEvent {
 
     private static final HandlerList HANDLERS = new HandlerList();
+
+    private final CommandSender invoker;
     private final StoredProfile profile;
     private final PremiumToggleReason reason;
 
-    public BukkitFastLoginPremiumToggleEvent(StoredProfile profile, PremiumToggleReason reason) {
+    public BukkitFastLoginPremiumToggleEvent(CommandSender invoker, StoredProfile profile, PremiumToggleReason reason) {
         super(true);
+
+        this.invoker = invoker;
         this.profile = profile;
         this.reason = reason;
     }
@@ -46,6 +51,13 @@ public class BukkitFastLoginPremiumToggleEvent extends Event implements FastLogi
     @Override
     public StoredProfile getProfile() {
         return profile;
+    }
+
+    /**
+     * @return who triggered this change. This could be a Player for itself or others (Admin) or the console.
+     */
+    public CommandSender getInvoker() {
+        return invoker;
     }
 
     @Override
