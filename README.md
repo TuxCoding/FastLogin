@@ -32,7 +32,7 @@ Development builds contain the latest changes from the Source-Code. They are ble
 but also include features, enhancements and bug fixes that are not yet in a released version. If you click on the left
 side on `Changes`, you can see iterative change sets leading to a specific build.
 
-You can download them from here: https://ci.codemc.org/job/Games647/job/FastLogin/
+You can download them from here: [CodeMC(Jenkins)](https://ci.codemc.org/job/Games647/job/FastLogin/)
 
 ***
 
