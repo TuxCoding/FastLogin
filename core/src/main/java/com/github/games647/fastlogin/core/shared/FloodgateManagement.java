@@ -167,6 +167,13 @@ public abstract class FloodgateManagement<P extends C, C, L extends LoginSession
             return;
         }
 
+        // Set the UUID for the player login from floodgate.
+        if (isLinked && profile.isOnlinemodePreferred()) {
+            profile.setId(floodgatePlayer.getCorrectUniqueId());
+            core.getPlugin().getLog().info(
+                "Player {} login as a Floodgate linked premium user (UUID: {})",
+                username, floodgatePlayer.getCorrectUniqueId());
+        }
         //start Bukkit/Bungee specific tasks
         startLogin();
 
