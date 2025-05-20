@@ -30,6 +30,7 @@ softdepend:
     - LogIt
     - UltraAuth
     - xAuth
+    - Passky
 
 commands:
     ${project.parent.name}:

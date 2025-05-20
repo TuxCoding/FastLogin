@@ -348,6 +348,14 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.zigazajc007</groupId>
+            <artifactId>Passky</artifactId>
+            <version>v3.0.0</version>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+
         <!--No maven repository :(-->
         <dependency>
             <groupId>de.st_ddt.crazy</groupId>
