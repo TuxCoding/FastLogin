@@ -127,7 +127,7 @@ public class PluginMessageListener {
         if (shouldPersist) {
             //bukkit module successfully received and force logged in the user
             //update only on success to prevent corrupt data
-            VelocityLoginSession loginSession = plugin.getSession().get(forPlayer);
+            VelocityLoginSession loginSession = plugin.getSession().get(forPlayer.getRemoteAddress());
             StoredProfile playerProfile = loginSession.getProfile();
             loginSession.setRegistered(true);
             if (!loginSession.isAlreadySaved()) {

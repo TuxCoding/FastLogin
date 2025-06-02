@@ -52,7 +52,7 @@ public class FloodgateAuthTask
     @Override
     protected void startLogin() {
         VelocityLoginSession session = new VelocityLoginSession(player.getUsername(), isRegistered, profile);
-        core.getPlugin().getSession().put(player, session);
+        core.getPlugin().getSession().put(player.getRemoteAddress(), session);
 
         // enable auto login based on the value of 'autoLoginFloodgate' in config.yml
         boolean forcedOnlineMode = autoLoginFloodgate.equals("true")
