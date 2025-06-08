@@ -59,10 +59,7 @@ import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class ConnectListener {
 
@@ -71,9 +68,26 @@ public class ConnectListener {
     private final FastLoginVelocity plugin;
     private final AntiBotService antiBotService;
 
+    private final HashMap<UUID, UUID> remappedPlayers = new HashMap<>();
+
     public ConnectListener(FastLoginVelocity plugin, AntiBotService antiBotService) {
         this.plugin = plugin;
         this.antiBotService = antiBotService;
+
+        // Load remapped UUIDs from config
+        plugin.getCore().getConfig().getSection("remappedUUIDs").getKeys().forEach(uuid -> {
+            String remapped = plugin.getCore().getConfig().getString("remappedUUIDs." + uuid);
+            if (remapped != null) {
+                UUID original = UUID.fromString(uuid);
+                UUID remappedUUID = UUID.fromString(remapped);
+                remappedPlayers.put(original, remappedUUID);
+            }
+        });
+        plugin.getLog().info("Remmapped UUIDs loaded: {}", remappedPlayers.size());
+        for (UUID uuid : remappedPlayers.keySet()) {
+            plugin.getLog().info(" - {} -> {}", uuid, remappedPlayers.get(uuid));
+        }
+
     }
 
     @Subscribe
@@ -133,10 +147,17 @@ public class ConnectListener {
             StoredProfile playerProfile = session.getProfile();
             playerProfile.setId(verifiedUUID);
             if (!plugin.getCore().getConfig().get("premiumUuid", true)) {
-                UUID offlineUUID = UUIDAdapter.generateOfflineId(event.getUsername());
-                event.setGameProfile(event.getGameProfile().withId(offlineUUID));
-                plugin.getLog().info("Overridden UUID from {} to {} (based of {}) on {}",
-                        verifiedUUID, offlineUUID, verifiedUsername, event.getConnection());
+                UUID remmapedUUID;
+                boolean remapped = false;
+                if (remappedPlayers.containsKey(verifiedUUID)) {
+                    remmapedUUID = remappedPlayers.get(verifiedUUID);
+                    remapped = true;
+                }else{
+                    remmapedUUID = UUIDAdapter.generateOfflineId(event.getUsername());
+                }
+                event.setGameProfile(event.getGameProfile().withId(remmapedUUID));
+                plugin.getLog().info("Overridden UUID from {} to {} (based of {}) on {} - remapped: {}",
+                        verifiedUUID, remmapedUUID, verifiedUsername, event.getConnection(), remapped);
             }
 
             if (!plugin.getCore().getConfig().get("forwardSkin", true)) {
