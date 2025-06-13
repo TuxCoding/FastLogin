@@ -58,7 +58,7 @@ public class AsyncPremiumCheck extends JoinManagement<Player, CommandSource, Vel
 
     @Override
     public void run() {
-        plugin.getSession().remove(connection);
+        plugin.getSession().remove(connection.getRemoteAddress());
         super.onLogin(username, new VelocityLoginSource(connection, preLoginEvent));
     }
 
@@ -82,7 +82,8 @@ public class AsyncPremiumCheck extends JoinManagement<Player, CommandSource, Vel
                                     String username, boolean registered) {
         source.enableOnlinemode();
         VelocityLoginSession session = new VelocityLoginSession(username, registered, profile);
-        plugin.getSession().put(source.getConnection(), session);
+        plugin.getLog().error("Putting session: {}", source.getConnection());
+        plugin.getSession().put(source.getConnection().getRemoteAddress(), session);
 
         String ip = source.getAddress().getAddress().getHostAddress();
         plugin.getCore().addLoginAttempt(ip, username);
@@ -91,6 +92,6 @@ public class AsyncPremiumCheck extends JoinManagement<Player, CommandSource, Vel
     @Override
     public void startCrackedSession(VelocityLoginSource source, StoredProfile profile, String username) {
         VelocityLoginSession session = new VelocityLoginSession(username, false, profile);
-        plugin.getSession().put(source.getConnection(), session);
+        plugin.getSession().put(source.getConnection().getRemoteAddress(), session);
     }
 }

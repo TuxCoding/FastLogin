@@ -119,7 +119,7 @@ public class ConnectListener {
     @Subscribe
     public void onGameProfileRequest(GameProfileRequestEvent event) {
         if (event.isOnlineMode()) {
-            LoginSession session = plugin.getSession().get(event.getConnection());
+            LoginSession session = plugin.getSession().get(event.getConnection().getRemoteAddress());
             if (session == null) {
                 plugin.getLog().error("No active login session found for onlinemode player {}", event.getUsername());
                 return;
@@ -173,7 +173,7 @@ public class ConnectListener {
             }
         }
 
-        VelocityLoginSession session = plugin.getSession().get(player);
+        VelocityLoginSession session = plugin.getSession().get(player.getRemoteAddress());
         if (session == null) {
             plugin.getLog().info("No active login session found on server connect for {}", player);
             return;
@@ -193,7 +193,7 @@ public class ConnectListener {
         Player player = disconnectEvent.getPlayer();
         plugin.getCore().getPendingConfirms().remove(player.getUniqueId());
 
-        plugin.getSession().remove(player);
+        plugin.getSession().remove(player.getRemoteAddress());
     }
 
     /**

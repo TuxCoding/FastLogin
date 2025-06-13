@@ -43,9 +43,30 @@ public abstract class AbstractAsyncScheduler {
         this.processingPool = processingPool;
     }
 
-    public abstract CompletableFuture<Void> runAsync(Runnable task);
+    public CompletableFuture<Void> runAsync(Runnable task) {
+        return CompletableFuture.runAsync(() -> process(task), processingPool).exceptionally(error -> {
+            logger.warn("Error occurred on thread pool", error);
+            return null;
+        });
+    }
 
-    public abstract CompletableFuture<Void> runAsyncDelayed(Runnable task, Duration delay);
+    public CompletableFuture<Void> runAsyncDelayed(Runnable task, Duration delay) {
+        return CompletableFuture.runAsync(() -> {
+            currentlyRunning.incrementAndGet();
+            try {
+                Thread.sleep(delay.toMillis());
+                task.run();
+            } catch (InterruptedException interruptedException) {
+                // restore interrupt flag
+                Thread.currentThread().interrupt();
+            } finally {
+                currentlyRunning.getAndDecrement();
+            }
+        }, processingPool).exceptionally(error -> {
+            logger.warn("Error occurred on thread pool", error);
+            return null;
+        });
+    }
 
     protected void process(Runnable task) {
         currentlyRunning.incrementAndGet();

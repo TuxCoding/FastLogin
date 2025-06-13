@@ -65,6 +65,8 @@ public abstract class SQLStorage implements AuthStorage {
             + "` WHERE `Name`=? LIMIT 1";
     protected static final String LOAD_BY_UUID = "SELECT * FROM `" + PREMIUM_TABLE
             + "` WHERE `UUID`=? LIMIT 1";
+    protected static final String DELETE_BY_NAME = "DELETE FROM " + PREMIUM_TABLE
+            + " WHERE `Name` = ?";
     protected static final String INSERT_PROFILE = "INSERT INTO `" + PREMIUM_TABLE
             + "` (`UUID`, `Name`, `Premium`, `Floodgate`, `LastIp`) " + "VALUES (?, ?, ?, ?, ?) ";
     // limit not necessary here, because it's unique
@@ -141,6 +143,25 @@ public abstract class SQLStorage implements AuthStorage {
         }
 
         return null;
+    }
+
+    @Override
+    public int deleteProfile(String name) {
+        try (Connection con = dataSource.getConnection();
+            PreparedStatement deleteStmt = con.prepareStatement(DELETE_BY_NAME)) {
+            deleteStmt.setString(1, name);
+
+            int rowsDeleted = deleteStmt.executeUpdate();
+            if (rowsDeleted > 0) {
+                log.info("Deleted {}'s profile data", name);
+            } else {
+                log.info("No profile data found for {}", name);
+            }
+            return rowsDeleted;
+        } catch (SQLException sqlEx) {
+            log.error("Failed to query profile: {}", name, sqlEx);
+            return 0;
+        }
     }
 
     private Optional<StoredProfile> parseResult(ResultSet resultSet) throws SQLException {

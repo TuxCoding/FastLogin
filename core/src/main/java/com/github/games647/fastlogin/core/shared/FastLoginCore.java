@@ -26,6 +26,7 @@
 package com.github.games647.fastlogin.core.shared;
 
 import com.github.games647.craftapi.resolver.MojangResolver;
+import com.github.games647.craftapi.resolver.Options;
 import com.github.games647.craftapi.resolver.http.RotatingProxySelector;
 import com.github.games647.fastlogin.core.CommonUtil;
 import com.github.games647.fastlogin.core.ProxyAgnosticMojangResolver;
@@ -48,11 +49,9 @@ import net.md_5.bungee.config.YamlConfiguration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Proxy.Type;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -121,30 +120,35 @@ public class FastLoginCore<P extends C, C, T extends PlatformPlugin<C>> {
             return;
         }
 
-        // Initialize the resolver based on the config parameter
-        this.resolver = this.config.getBoolean("useProxyAgnosticResolver", false)
-            ? new ProxyAgnosticMojangResolver() : new MojangResolver();
+        Options resolverOptions = new Options();
+        resolverOptions.setMaxNameRequests(config.getInt("mojang-request-limit", 600));
 
-        antiBot = createAntiBotService(config.getSection("anti-bot"));
         Set<Proxy> proxies = config.getStringList("proxies")
                 .stream()
                 .map(proxy -> proxy.split(":"))
                 .map(proxy -> new InetSocketAddress(proxy[0], Integer.parseInt(proxy[1])))
                 .map(sa -> new Proxy(Type.HTTP, sa))
                 .collect(toSet());
-
-        Collection<InetAddress> addresses = new HashSet<>();
-        for (String localAddress : config.getStringList("ip-addresses")) {
-            try {
-                addresses.add(InetAddress.getByName(localAddress.replace('-', '.')));
-            } catch (UnknownHostException ex) {
-                plugin.getLog().error("IP-Address is unknown to us", ex);
-            }
+        if (!proxies.isEmpty()) {
+            resolverOptions.setProxySelector(new RotatingProxySelector(proxies));
         }
 
-        resolver.setMaxNameRequests(config.getInt("mojang-request-limit"));
-        resolver.setProxySelector(new RotatingProxySelector(proxies));
-        resolver.setOutgoingAddresses(addresses);
+//        TODO: Not available currently in craftapi?
+//        Collection<InetAddress> addresses = new HashSet<>();
+//        for (String localAddress : config.getStringList("ip-addresses")) {
+//            try {
+//                addresses.add(InetAddress.getByName(localAddress.replace('-', '.')));
+//            } catch (UnknownHostException ex) {
+//                plugin.getLog().error("IP-Address is unknown to us", ex);
+//            }
+//        }
+//        resolver.setOutgoingAddresses(addresses);
+
+        // Initialize the resolver based on the config parameter
+        this.resolver = this.config.getBoolean("useProxyAgnosticResolver", false)
+            ? new ProxyAgnosticMojangResolver(resolverOptions) : new MojangResolver(resolverOptions);
+
+        antiBot = createAntiBotService(config.getSection("anti-bot"));
     }
 
     private AntiBotService createAntiBotService(Configuration botSection) {

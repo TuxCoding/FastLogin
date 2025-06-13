@@ -45,6 +45,11 @@ commands:
         usage: /<command> [player]
         permission: ${project.artifactId}.command.cracked
 
+    fldelete:
+        description: 'Delete player profile data'
+        usage: /<command> [player]
+        permission: ${project.artifactId}.command.delete
+
 permissions:
     ${project.artifactId}.command.premium:
         description: 'Label themselves as premium'
@@ -63,3 +68,7 @@ permissions:
         description: 'Label others as cracked'
         children:
             ${project.artifactId}.command.cracked: true
+
+    ${project.artifactId}.command.delete:
+        description: 'Delete other players profile data'
+        default: op
