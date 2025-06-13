@@ -41,9 +41,9 @@ public class PasskyHook implements AuthPlugin<Player> {
     @Override
     public boolean forceLogin(Player player) {
         LoginResult result = PasskyAPI.forceLogin(new Identifier(player), true);
-        
-        if (!result.success && result.status == LoginStatus.ALREADY_LOGGED_IN) {
-            plugin.getLog().debug("Player {} already logged in via Passky", player.getName());
+
+        if (!result.success){
+            plugin.getLog().debug("Failed to force login {} via Passky: {}", player.getName(), result.status);
         }
 
         return result.success;
