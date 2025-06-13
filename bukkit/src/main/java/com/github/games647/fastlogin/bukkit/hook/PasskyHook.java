@@ -25,31 +25,38 @@
  */
 package com.github.games647.fastlogin.bukkit.hook;
 
+import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
 import com.github.games647.fastlogin.core.hooks.AuthPlugin;
-import com.rabbitcomapny.Passky;
-import com.rabbitcomapny.api.Identifier;
-import com.rabbitcomapny.api.LoginResult;
-import com.rabbitcomapny.api.PasskyAPI;
-import com.rabbitcomapny.api.RegisterResult;
+import com.rabbitcomapny.api.*;
 import org.bukkit.entity.Player;
 
 public class PasskyHook implements AuthPlugin<Player> {
 
-    private final Passky plugin;
+    private final FastLoginBukkit plugin;
 
-    public PasskyHook(Passky plugin) {
+    public PasskyHook(FastLoginBukkit plugin) {
         this.plugin = plugin;
     }
 
     @Override
     public boolean forceLogin(Player player) {
         LoginResult result = PasskyAPI.forceLogin(new Identifier(player), true);
+        
+        if (!result.success && result.status == LoginStatus.ALREADY_LOGGED_IN) {
+            plugin.getLog().debug("Player {} already logged in via Passky", player.getName());
+        }
+
         return result.success;
     }
 
     @Override
     public boolean forceRegister(Player player, String password) {
         RegisterResult result = PasskyAPI.forceRegister(new Identifier(player), password, true);
+
+        if (!result.success) {
+            plugin.getLog().debug("Failed to register {} via Passky: {}", player.getName(), result.status);
+        }
+
         return result.success;
     }
 
