@@ -137,7 +137,7 @@ public class BungeeManager {
         try {
             ServerConfiguration.class.getDeclaredMethod("isProxyEnabled");
             return Bukkit.getServerConfig().isProxyEnabled();
-        } catch (NoSuchMethodException noSuchMethodEx) {
+        } catch (NoClassDefFoundError | NoSuchMethodException noSuchClassMethodEx) {
             // Ignore continue below
         }
 
