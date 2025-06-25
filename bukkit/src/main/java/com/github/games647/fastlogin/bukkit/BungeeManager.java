@@ -31,6 +31,7 @@ import com.github.games647.fastlogin.core.message.LoginActionMessage;
 import com.github.games647.fastlogin.core.message.NamespaceKey;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import io.papermc.paper.configuration.ServerConfiguration;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
@@ -133,6 +134,13 @@ public class BungeeManager {
     }
 
     private boolean detectProxy() {
+        try {
+            ServerConfiguration.class.getDeclaredMethod("isProxyEnabled");
+            return Bukkit.getServerConfig().isProxyEnabled();
+        } catch (NoClassDefFoundError | NoSuchMethodException noSuchClassMethodEx) {
+            // Ignore continue below
+        }
+
         try {
             if (isProxySupported("org.spigotmc.SpigotConfig", "bungee")) {
                 return true;
