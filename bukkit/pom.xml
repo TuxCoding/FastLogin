@@ -351,7 +351,7 @@
         <dependency>
             <groupId>com.github.zigazajc007</groupId>
             <artifactId>Passky</artifactId>
-            <version>v3.0.0</version>
+            <version>v3.1.0</version>
             <scope>provided</scope>
             <optional>true</optional>
 

@@ -66,7 +66,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.0</version>
                 <configuration>
                     <annotationProcessors>
                         <annotationProcessor>
@@ -183,7 +183,7 @@
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
-            <version>3.5.3</version>
+            <version>3.5.4</version>
             <exclusions>
                 <!-- Exclude JNA implementation for WAFFLE - Windows Authentication Framework (mariadb)-->
                 <exclusion>
