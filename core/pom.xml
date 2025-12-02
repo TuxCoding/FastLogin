@@ -204,6 +204,8 @@
             <groupId>com.github.games647</groupId>
             <artifactId>craftapi</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/craftapi-1.0-SNAPSHOT.jar</systemPath>
         </dependency>
 
         <!-- Database driver included in Spigot -->
