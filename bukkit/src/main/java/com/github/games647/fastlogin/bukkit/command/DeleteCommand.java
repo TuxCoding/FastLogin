@@ -28,6 +28,7 @@ package com.github.games647.fastlogin.bukkit.command;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.games647.fastlogin.bukkit.scheduler.functions.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -65,10 +66,10 @@ public class DeleteCommand implements TabExecutor {
             return false;
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Scheduler.getAsyncScheduler().runTask(plugin, () -> {
             int count = plugin.getCore().getStorage().deleteProfile(args[0]);
             if (!(sender instanceof ConsoleCommandSender)) {
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                Scheduler.getGlobalRegionScheduler().runTask(plugin, () -> {
                     if (count == 0) {
                         sender.sendMessage("Error: No profile entries found!");
                     } else {

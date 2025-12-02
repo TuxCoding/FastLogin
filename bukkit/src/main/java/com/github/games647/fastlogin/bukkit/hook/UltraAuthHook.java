@@ -26,14 +26,12 @@
 package com.github.games647.fastlogin.bukkit.hook;
 
 import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
+import com.github.games647.fastlogin.bukkit.scheduler.functions.Scheduler;
+import com.github.games647.fastlogin.bukkit.scheduler.task.TaskCallback;
 import com.github.games647.fastlogin.core.hooks.AuthPlugin;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ultraauth.api.UltraAuthAPI;
 import ultraauth.managers.PlayerManager;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * Project page:
@@ -53,22 +51,17 @@ public class UltraAuthHook implements AuthPlugin<Player> {
     @Override
     public boolean forceLogin(Player player) {
         //not thread-safe
-        Future<Boolean> future = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+        TaskCallback<Boolean> callback = new TaskCallback<>();
+        Scheduler.getAsyncScheduler().runTask(plugin, () -> {
             if (UltraAuthAPI.isAuthenticated(player)) {
                 plugin.getLog().warn(ALREADY_AUTHENTICATED, player);
-                return false;
+                callback.setCallBack(false);
             }
 
             UltraAuthAPI.authenticatedPlayer(player);
-            return UltraAuthAPI.isAuthenticated(player);
+            callback.setCallBack(UltraAuthAPI.isAuthenticated(player));
         });
-
-        try {
-            return future.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            plugin.getLog().error("Failed to forceLogin player: {}", player, ex);
-            return false;
-        }
+        return callback.getCallBack();
     }
 
     @Override

@@ -27,9 +27,9 @@ package com.github.games647.fastlogin.bukkit.task;
 
 import com.github.games647.fastlogin.bukkit.BukkitLoginSession;
 import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
+import com.github.games647.fastlogin.bukkit.scheduler.functions.Scheduler;
 import com.github.games647.fastlogin.core.shared.FastLoginCore;
 import com.github.games647.fastlogin.core.shared.FloodgateManagement;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
@@ -53,7 +53,7 @@ public class FloodgateAuthTask extends FloodgateManagement<Player, CommandSender
 
         // run login task
         Runnable forceLoginTask = new ForceLoginTask(core.getPlugin().getCore(), player, session);
-        Bukkit.getScheduler().runTaskAsynchronously(core.getPlugin(), forceLoginTask);
+        Scheduler.getAsyncScheduler().runTask(core.getPlugin(), forceLoginTask);
     }
 
     protected String getName(Player player) {

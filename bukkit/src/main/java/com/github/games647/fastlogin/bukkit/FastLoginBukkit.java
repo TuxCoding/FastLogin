@@ -34,6 +34,7 @@ import com.github.games647.fastlogin.bukkit.listener.PaperCacheListener;
 import com.github.games647.fastlogin.bukkit.listener.protocollib.ProtocolLibListener;
 import com.github.games647.fastlogin.bukkit.listener.protocollib.SkinApplyListener;
 import com.github.games647.fastlogin.bukkit.listener.protocolsupport.ProtocolSupportListener;
+import com.github.games647.fastlogin.bukkit.scheduler.functions.Scheduler;
 import com.github.games647.fastlogin.bukkit.task.DelayedAuthHook;
 import com.github.games647.fastlogin.core.CommonUtil;
 import com.github.games647.fastlogin.core.PremiumStatus;
@@ -43,6 +44,7 @@ import com.github.games647.fastlogin.core.hooks.bedrock.FloodgateService;
 import com.github.games647.fastlogin.core.hooks.bedrock.GeyserService;
 import com.github.games647.fastlogin.core.shared.FastLoginCore;
 import com.github.games647.fastlogin.core.shared.PlatformPlugin;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -72,14 +74,19 @@ public class FastLoginBukkit extends JavaPlugin implements PlatformPlugin<Comman
             Duration.ofMinutes(1), -1
     );
 
+    @Getter
     private final Map<UUID, PremiumStatus> premiumPlayers = new ConcurrentHashMap<>();
     private final Logger logger;
 
     private boolean serverStarted;
+    @Getter
     private BungeeManager bungeeManager;
     private final BukkitScheduler scheduler;
+    @Getter
     private FastLoginCore<Player, CommandSender, FastLoginBukkit> core;
+    @Getter
     private FloodgateService floodgateService;
+    @Getter
     private GeyserService geyserService;
 
     private PremiumPlaceholder premiumPlaceholder;
@@ -135,7 +142,7 @@ public class FastLoginBukkit extends JavaPlugin implements PlatformPlugin<Comman
         }
 
         //delay dependency setup because we load the plugin very early where plugins are initialized yet
-        getServer().getScheduler().runTaskLater(this, new DelayedAuthHook(this), 5L);
+       Scheduler.getGlobalRegionScheduler().runTaskLater(this, new DelayedAuthHook(this), 5L);
 
         pluginManager.registerEvents(new ConnectionListener(this), this);
 
@@ -201,10 +208,6 @@ public class FastLoginBukkit extends JavaPlugin implements PlatformPlugin<Comman
         }
     }
 
-    public FastLoginCore<Player, CommandSender, FastLoginBukkit> getCore() {
-        return core;
-    }
-
     /**
      * Gets a thread-safe map about players which are connecting to the server are being checked to be premium (paid
      * account)
@@ -232,10 +235,6 @@ public class FastLoginBukkit extends JavaPlugin implements PlatformPlugin<Comman
     public void removeSession(InetSocketAddress address) {
         String id = getSessionId(address);
         loginSession.remove(id);
-    }
-
-    public Map<UUID, PremiumStatus> getPremiumPlayers() {
-        return premiumPlayers;
     }
 
     /**
@@ -279,10 +278,6 @@ public class FastLoginBukkit extends JavaPlugin implements PlatformPlugin<Comman
         this.serverStarted = true;
     }
 
-    public BungeeManager getBungeeManager() {
-        return bungeeManager;
-    }
-
     @Override
     public Path getPluginFolder() {
         return getDataFolder().toPath();
@@ -313,14 +308,6 @@ public class FastLoginBukkit extends JavaPlugin implements PlatformPlugin<Comman
     public boolean isPluginInstalled(String name) {
         // the plugin may be enabled after FastLogin, so isPluginEnabled() won't work here
         return Bukkit.getServer().getPluginManager().getPlugin(name) != null;
-    }
-
-    public FloodgateService getFloodgateService() {
-        return floodgateService;
-    }
-
-    public GeyserService getGeyserService() {
-        return geyserService;
     }
 
     @Override

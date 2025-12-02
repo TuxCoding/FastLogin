@@ -28,15 +28,19 @@ package com.github.games647.fastlogin.bukkit.hook;
 import com.comphenix.protocol.reflect.accessors.Accessors;
 import com.comphenix.protocol.reflect.accessors.FieldAccessor;
 import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
+import com.github.games647.fastlogin.bukkit.scheduler.functions.Scheduler;
+import com.github.games647.fastlogin.bukkit.scheduler.task.TaskCallback;
 import com.github.games647.fastlogin.core.hooks.AuthPlugin;
 import de.st_ddt.crazylogin.CrazyLogin;
 import de.st_ddt.crazylogin.data.LoginPlayerData;
 import de.st_ddt.crazylogin.databases.CrazyLoginDataDatabase;
 import de.st_ddt.crazylogin.listener.PlayerListener;
 import de.st_ddt.crazylogin.metadata.Authenticated;
+import lombok.var;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -65,13 +69,14 @@ public class CrazyLoginHook implements AuthPlugin<Player> {
     @Override
     public boolean forceLogin(Player player) {
         //not thread-safe operation
-        Future<Optional<LoginPlayerData>> future = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+        TaskCallback<Optional<LoginPlayerData>> callback = new TaskCallback<>();
+        Scheduler.getAsyncScheduler().runTask(plugin, () -> {
             LoginPlayerData playerData = crazyLoginPlugin.getPlayerData(player);
             if (playerData != null) {
                 //mark the account as logged in
                 playerData.setLoggedIn(true);
 
-                String ip = player.getAddress().getAddress().getHostAddress();
+                String ip = Objects.requireNonNull(player.getAddress()).getAddress().getHostAddress();
 //this should be done after login to restore the inventory, show players, prevent potential memory leaks...
 //from: https://github.com/ST-DDT/CrazyLogin/blob/master/src/main/java/de/st_ddt/crazylogin/CrazyLogin.java#L1948
                 playerData.resetLoginFails();
@@ -90,25 +95,20 @@ public class CrazyLoginHook implements AuthPlugin<Player> {
                 playerData.addIP(ip);
                 player.setMetadata("Authenticated", new Authenticated(crazyLoginPlugin, player));
                 crazyLoginPlugin.unregisterDynamicHooks();
-                return Optional.of(playerData);
+                callback.setCallBack(Optional.of(playerData));
             }
 
-            return Optional.empty();
+          callback.setCallBack(Optional.empty());
         });
 
-        try {
-            Optional<LoginPlayerData> result = future.get().filter(LoginPlayerData::isLoggedIn);
+            var result = callback.getCallBack().filter(LoginPlayerData::isLoggedIn);
             if (result.isPresent()) {
                 //SQL-Queries should run async
                 crazyLoginPlugin.getCrazyDatabase().saveWithoutPassword(result.get());
                 return true;
             }
-        } catch (InterruptedException | ExecutionException ex) {
-            plugin.getLog().error("Failed to forceLogin player: {}", player, ex);
-            return false;
-        }
 
-        return false;
+            return false;
     }
 
     @Override

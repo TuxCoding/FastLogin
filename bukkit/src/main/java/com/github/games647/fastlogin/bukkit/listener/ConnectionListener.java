@@ -27,6 +27,7 @@ package com.github.games647.fastlogin.bukkit.listener;
 
 import com.github.games647.fastlogin.bukkit.BukkitLoginSession;
 import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
+import com.github.games647.fastlogin.bukkit.scheduler.functions.Scheduler;
 import com.github.games647.fastlogin.bukkit.task.FloodgateAuthTask;
 import com.github.games647.fastlogin.bukkit.task.ForceLoginTask;
 import com.github.games647.fastlogin.core.hooks.bedrock.FloodgateService;
@@ -67,8 +68,7 @@ public class ConnectionListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent joinEvent) {
         Player player = joinEvent.getPlayer();
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Scheduler.getAsyncScheduler().runTaskLater(plugin, () -> {
             delayForceLogin(player);
             // delay the login process to let auth plugins initialize the player
             // Magic number however as there is no direct event from those plugins
@@ -89,7 +89,7 @@ public class ConnectionListener implements Listener {
                 FloodgatePlayer floodgatePlayer = floodgateService.getBedrockPlayer(player.getUniqueId());
                 if (floodgatePlayer != null) {
                     Runnable floodgateAuthTask = new FloodgateAuthTask(plugin.getCore(), player, floodgatePlayer);
-                    Bukkit.getScheduler().runTaskAsynchronously(plugin, floodgateAuthTask);
+                    Scheduler.getAsyncScheduler().runTask(plugin, floodgateAuthTask);
                     plugin.getBungeeManager().markJoinEventFired(player);
                     return;
                 }
@@ -101,7 +101,7 @@ public class ConnectionListener implements Listener {
                 + "when the command from the proxy is received");
         } else {
             Runnable forceLoginTask = new ForceLoginTask(plugin.getCore(), player, session);
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, forceLoginTask);
+            Scheduler.getAsyncScheduler().runTask(plugin, forceLoginTask);
         }
 
         plugin.getBungeeManager().markJoinEventFired(player);
