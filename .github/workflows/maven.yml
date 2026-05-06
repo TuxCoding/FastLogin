@@ -27,7 +27,7 @@ jobs:
     # Run steps
     steps:
       # Pull changes
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Setup Java
       - name: Set up JDK
@@ -52,7 +52,7 @@ jobs:
     # Run steps
     steps:
       # Pull changes
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Setup Java
       - name: Set up JDK
