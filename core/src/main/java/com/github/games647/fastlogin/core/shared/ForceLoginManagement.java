@@ -80,7 +80,13 @@ public abstract class ForceLoginManagement<P extends C, C, L extends LoginSessio
                     if (success) {
                         //update only on success to prevent corrupt data
                         if (playerProfile != null) {
-                            playerProfile.setId(session.getUuid());
+                            if (session.getUuid() == null) {
+                                // Set session ID from floodgatePlayer.getCorrectUniqueId()
+                                session.setUuid(playerProfile.getId());
+                            } else {
+                                // Set player UUID to session UUID
+                                playerProfile.setId(session.getUuid());
+                            }
                             playerProfile.setOnlinemodePreferred(true);
                             storage.save(playerProfile);
                         }
