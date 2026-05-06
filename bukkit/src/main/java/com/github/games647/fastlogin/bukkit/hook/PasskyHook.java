@@ -31,7 +31,11 @@ import com.rabbitcomapny.api.Identifier;
 import com.rabbitcomapny.api.LoginResult;
 import com.rabbitcomapny.api.PasskyAPI;
 import com.rabbitcomapny.api.RegisterResult;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class PasskyHook implements AuthPlugin<Player> {
 
@@ -43,22 +47,38 @@ public class PasskyHook implements AuthPlugin<Player> {
 
     @Override
     public boolean forceLogin(Player player) {
-        LoginResult result = PasskyAPI.forceLogin(new Identifier(player), true);
-        if (!result.success) {
-            plugin.getLog().error("Failed to force login {} via Passky: {}", player.getName(), result.status);
-        }
+        Future<Boolean> future = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+            LoginResult result = PasskyAPI.forceLogin(new Identifier(player), true);
+            if (!result.success) {
+                plugin.getLog().error("Failed to force login {} via Passky: {}", player.getName(), result.status);
+            }
+            return result.success;
+        });
 
-        return result.success;
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            plugin.getLog().error("Failed to forceLogin player: {}", player, ex);
+            return false;
+        }
     }
 
     @Override
     public boolean forceRegister(Player player, String password) {
-        RegisterResult result = PasskyAPI.forceRegister(new Identifier(player), password, true);
-        if (!result.success) {
-            plugin.getLog().error("Failed to register {} via Passky: {}", player.getName(), result.status);
-        }
+        Future<Boolean> future = Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+            RegisterResult result = PasskyAPI.forceRegister(new Identifier(player), password, true);
+            if (!result.success) {
+                plugin.getLog().error("Failed to register {} via Passky: {}", player.getName(), result.status);
+            }
+            return result.success;
+        });
 
-        return result.success;
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            plugin.getLog().error("Failed to forceRegister player: {}", player, ex);
+            return false;
+        }
     }
 
     @Override
