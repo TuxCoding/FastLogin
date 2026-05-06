@@ -83,7 +83,7 @@
             <plugin>
                 <!-- Update compiler plugin for old Maven versions like GH runner -->
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.14.1</version>
             </plugin>
 
             <plugin>
@@ -145,7 +145,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>10.23.0</version>
+                        <version>13.1.0</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -179,7 +179,7 @@
 
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
+                <version>3.5.0</version>
                 <!-- Explicitly enable multi-release for the scheduler,
                 because detection from class shading doesn't work -->
                 <executions>
