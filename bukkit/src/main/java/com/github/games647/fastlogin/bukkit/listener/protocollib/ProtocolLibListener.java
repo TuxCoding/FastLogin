@@ -47,7 +47,6 @@ import com.github.games647.fastlogin.core.antibot.AntiBotService;
 import com.github.games647.fastlogin.core.antibot.AntiBotService.Action;
 import com.mojang.datafixers.util.Either;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
 import io.netty.util.AttributeKey;
 import org.bukkit.entity.Player;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
@@ -117,14 +116,6 @@ public class ProtocolLibListener extends PacketAdapter {
         plugin.getLog().info("New incoming packet {} from {}", packetType, sender.getName());
         try {
             if (packetType == START) {
-                if (plugin.getFloodgateService() != null) {
-                    boolean success = processFloodgateTasks(packetEvent);
-                    if (!success) {
-                        // don't continue execution if the player was kicked by Floodgate
-                        return;
-                    }
-                }
-
                 PacketContainer packet = packetEvent.getPacket();
 
                 InetSocketAddress address = sender.getAddress();
@@ -240,6 +231,17 @@ public class ProtocolLibListener extends PacketAdapter {
         plugin.removeSession(player.getAddress());
 
         PacketContainer packet = packetEvent.getPacket();
+
+        //floodgate event listeners may run after our event listener
+        if (plugin.getFloodgateService() != null) {
+            FloodgatePlayer floodgatePlayer = getFloodgatePlayer(packetEvent.getPlayer());
+            if (floodgatePlayer != null) {
+                //add the floodgate prefix for our internal checks
+                //the correct username will be written to the packet by Floodgate
+                username = floodgatePlayer.getCorrectUsername();
+            }
+        }
+
         Optional<ClientPublicKey> clientKey;
         if (new MinecraftVersion(1, 19, 3).atOrAbove()) {
             // public key is sent separate
@@ -308,43 +310,4 @@ public class ProtocolLibListener extends PacketAdapter {
         return FuzzyReflection.getFieldValue(injector, Channel.class, true);
     }
 
-    /**
-     * Reimplementation of the tasks injected Floodgate in ProtocolLib that are not run due to a bug
-     * @see <a href="https://github.com/GeyserMC/Floodgate/issues/143">Issue Floodgate#143</a>
-     * @see <a href="https://github.com/GeyserMC/Floodgate/blob/5d5713ed9e9eeab0f4abdaa9cf5cd8619dc1909b/spigot/src/main/java/org/geysermc/floodgate/addon/data/SpigotDataHandler.java#L121-L175">Floodgate/SpigotDataHandler</a>
-     * @param packetEvent the PacketEvent that won't be processed by Floodgate
-     * @return false if the player was kicked
-     */
-    private boolean processFloodgateTasks(PacketEvent packetEvent) {
-        PacketContainer packet = packetEvent.getPacket();
-        Player player = packetEvent.getPlayer();
-        FloodgatePlayer floodgatePlayer = getFloodgatePlayer(player);
-        if (floodgatePlayer == null) {
-            return true;
-        }
-
-        // kick the player, if necessary
-        Channel channel = getChannel(packetEvent.getPlayer());
-        AttributeKey<String> kickMessageAttribute = AttributeKey.valueOf("floodgate-kick-message");
-        String kickMessage = channel.attr(kickMessageAttribute).get();
-        if (kickMessage != null) {
-            player.kickPlayer(kickMessage);
-            return false;
-        }
-
-        // add prefix
-        String username = floodgatePlayer.getCorrectUsername();
-        if (packet.getGameProfiles().size() > 0) {
-            packet.getGameProfiles().write(0,
-                    new WrappedGameProfile(floodgatePlayer.getCorrectUniqueId(), username));
-        } else {
-            packet.getStrings().write(0, username);
-        }
-
-        // remove real Floodgate data handler
-        ChannelHandler floodgateHandler = channel.pipeline().get("floodgate_data_handler");
-        channel.pipeline().remove(floodgateHandler);
-
-        return true;
-    }
 }
