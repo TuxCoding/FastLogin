@@ -162,7 +162,7 @@
             <!-- Require newer versions for Junit5 support -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <configuration>
                     <!-- Work-around to make multi-release classes discoverable
                     https://issues.apache.org/jira/browse/SUREFIRE-1731 -->
@@ -221,7 +221,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>6.0.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -229,7 +229,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.17.0</version>
+            <version>5.21.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
