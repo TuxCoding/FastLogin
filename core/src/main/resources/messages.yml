@@ -22,7 +22,7 @@
 # ========= Shared (BungeeCord and Bukkit)   ============
 
 # Switch mode is activated and a new cracked player tries to join, who is not namely allowed
-switch-kick-message: '&4Only paid Minecraft allowed accounts are allowed to join this server'
+switch-kick-message: '&4Only paid Minecraft accounts are allowed to join this server'
 
 # GameProfile activated premium login in order to skip offline authentication
 add-premium: '&2Added to the list of premium players'
@@ -30,10 +30,10 @@ add-premium: '&2Added to the list of premium players'
 # GameProfile activated premium login in order to skip offline authentication
 add-premium-other: '&2Player has been added to the premium list'
 
-# GameProfile is already set be a paid account
+# GameProfile is already set to be a paid account
 already-exists: '&4You are already on the premium list'
 
-# GameProfile is already set be a paid account
+# GameProfile is already set to be a paid account
 already-exists-other: '&4Player is already on the premium list'
 
 # GameProfile was changed to be cracked
@@ -59,7 +59,7 @@ auto-login: '&2Auto logged in'
 # FastLogin attempted to auto register user. The user account is registered to protect it from cracked players
 # If FastLogin is respecting auth plugin IP limit - the registration may have failed, however the message is still displayed
 # The password can be used if the mojang servers are down, and you still want your premium users to login (PLANNED)
-auto-register: '&2Tried auto registering with password: &7%password&2. You may want change it?'
+auto-register: '&2Tried auto registering with password: &7%password&2. You may want to change it?'
 
 # GameProfile is not able to toggle the premium state of other players
 no-permission: '&4Not enough permissions'
