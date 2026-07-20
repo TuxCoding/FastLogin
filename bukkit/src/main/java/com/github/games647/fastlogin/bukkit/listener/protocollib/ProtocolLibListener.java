@@ -178,7 +178,7 @@ public class ProtocolLibListener extends PacketAdapter {
         if (session == null) {
             plugin.getLog().warn("Profile {} tried to send encryption response at invalid state", sender.getAddress());
             sender.kickPlayer(plugin.getCore().getMessage("invalid-request"));
-        } else {
+        } else if (session.getVerifyToken().length != 0) { // Skip offline player
             byte[] expectedVerifyToken = session.getVerifyToken();
             if (verifyNonce(sender, packetEvent.getPacket(), session.getClientPublicKey(), expectedVerifyToken)) {
                 packetEvent.getAsyncMarker().incrementProcessingDelay();
