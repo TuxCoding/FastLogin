@@ -38,7 +38,10 @@ import fr.xephi.authme.process.register.executors.RegistrationMethod;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.RegisteredListener;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -61,6 +64,8 @@ public class AuthMeHook implements AuthPlugin<Player>, Listener {
 
     // AuthMe 6.0+ pre-join dialog support: forceLoginFromProxy(String) on the API
     private Method forceLoginFromProxyMethod;
+    private Object preJoinLoginTarget;
+    private Method preJoinLoginMethod;
 
     public AuthMeHook(FastLoginBukkit plugin) {
         this.plugin = plugin;
@@ -79,21 +84,27 @@ public class AuthMeHook implements AuthPlugin<Player>, Listener {
         // Detect AuthMe 6.0+ forceLoginFromProxy(String) API for pre-join dialog compatibility
         try {
             forceLoginFromProxyMethod = authmeAPI.getClass().getMethod("forceLoginFromProxy", String.class);
-            enablePreJoinSupport();
+            preJoinLoginTarget = authmeAPI;
+            preJoinLoginMethod = forceLoginFromProxyMethod;
         } catch (NoSuchMethodException ignored) {
             forceLoginFromProxyMethod = null;
         }
+        enablePreJoinSupport();
     }
 
     private void enablePreJoinSupport() {
         try {
-            Class.forName("io.papermc.paper.event.connection.configuration.AsyncPlayerConnectionConfigureEvent");
+            Class<?> configureEvent = Class.forName(
+                    "io.papermc.paper.event.connection.configuration.AsyncPlayerConnectionConfigureEvent");
             Class<?> connection = Class.forName("io.papermc.paper.connection.PlayerConnection");
             connection.getMethod("isConnected");
             Class.forName("io.papermc.paper.connection.PlayerConfigurationConnection")
                     .getMethod("sendPluginMessage", org.bukkit.plugin.Plugin.class, String.class, byte[].class);
             org.bukkit.plugin.messaging.PluginMessageListener.class
                     .getMethod("onPluginMessageReceived", String.class, connection, byte[].class);
+            if (preJoinLoginMethod == null && !findLegacyPreJoinQueue(configureEvent)) {
+                return;
+            }
             AuthMePreJoinListener listener = new AuthMePreJoinListener(plugin, this);
             plugin.getServer().getPluginManager().registerEvents(listener, plugin);
             if (plugin.getBungeeManager().isEnabled()) {
@@ -104,11 +115,50 @@ public class AuthMeHook implements AuthPlugin<Player>, Listener {
             plugin.getLog().info("Enabled AuthMe pre-join dialog compatibility");
         } catch (ClassNotFoundException | NoSuchMethodException ignored) {
             // Older Paper and Spigot keep the ordinary post-join flow.
+        } catch (ReflectiveOperationException | SecurityException ex) {
+            plugin.getLog().warn("Could not enable AuthMe pre-join dialog compatibility", ex);
         }
     }
 
+    private boolean findLegacyPreJoinQueue(Class<?> configureEvent) throws ReflectiveOperationException {
+        Plugin authme = plugin.getServer().getPluginManager().getPlugin("AuthMe");
+        if (authme == null) {
+            return false;
+        }
+
+        HandlerList handlers = (HandlerList) configureEvent.getMethod("getHandlerList").invoke(null);
+        boolean hasAuthMeListener = false;
+        for (RegisteredListener registration : handlers.getRegisteredListeners()) {
+            if (registration.getPlugin() != authme) {
+                continue;
+            }
+            hasAuthMeListener = true;
+            Listener listener = registration.getListener();
+            try {
+                // Builds such as 6.0.0-b2734 check this queue before opening either dialog,
+                // but do not yet expose forceLoginFromProxy(String) on AuthMeApi.
+                Field sessionsField = listener.getClass().getDeclaredField("proxySessionManager");
+                sessionsField.setAccessible(true);
+                Object sessions = sessionsField.get(listener);
+                if (sessions != null) {
+                    Method queueLogin = sessions.getClass().getMethod("processProxySessionMessage", String.class);
+                    preJoinLoginTarget = sessions;
+                    preJoinLoginMethod = queueLogin;
+                    plugin.getLog().info("Using AuthMe session queue for pre-join dialog compatibility");
+                    return true;
+                }
+            } catch (NoSuchFieldException | NoSuchMethodException ignored) {
+                // Only the dialog listener exposes the shared session queue.
+            }
+        }
+        if (hasAuthMeListener) {
+            plugin.getLog().warn("AuthMe configuration listener found, but no compatible pre-join login API or queue");
+        }
+        return false;
+    }
+
     public void forceLoginBeforeJoin(String playerName) throws ReflectiveOperationException {
-        forceLoginFromProxyMethod.invoke(authmeAPI, playerName);
+        preJoinLoginMethod.invoke(preJoinLoginTarget, playerName);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -125,7 +175,7 @@ public class AuthMeHook implements AuthPlugin<Player>, Listener {
     public boolean forceLogin(Player player) {
         if (authmeAPI.isAuthenticated(player)) {
             // AuthMe may have consumed the pre-join request before our delayed task runs.
-            if (forceLoginFromProxyMethod != null) {
+            if (preJoinLoginMethod != null) {
                 return true;
             }
             plugin.getLog().warn(ALREADY_AUTHENTICATED, player);
