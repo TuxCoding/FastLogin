@@ -28,6 +28,8 @@ package com.github.games647.fastlogin.bukkit.hook;
 import com.github.games647.fastlogin.bukkit.BukkitLoginSession;
 import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
 import com.github.games647.fastlogin.core.hooks.AuthPlugin;
+import com.github.games647.fastlogin.core.message.NamespaceKey;
+import com.github.games647.fastlogin.core.message.PreJoinMessage;
 import fr.xephi.authme.api.v3.AuthMeApi;
 import fr.xephi.authme.events.RestoreSessionEvent;
 import fr.xephi.authme.process.Management;
@@ -39,6 +41,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * GitHub: <a href="https://github.com/Xephi/AuthMeReloaded/">...</a>
@@ -56,6 +59,9 @@ public class AuthMeHook implements AuthPlugin<Player>, Listener {
     private final AuthMeApi authmeAPI;
     private Management authmeManagement;
 
+    // AuthMe 6.0+ pre-join dialog support: forceLoginFromProxy(String) on the API
+    private Method forceLoginFromProxyMethod;
+
     public AuthMeHook(FastLoginBukkit plugin) {
         this.plugin = plugin;
         this.authmeAPI = AuthMeApi.getInstance();
@@ -69,6 +75,40 @@ public class AuthMeHook implements AuthPlugin<Player>, Listener {
                 this.authmeManagement = null;
             }
         }
+
+        // Detect AuthMe 6.0+ forceLoginFromProxy(String) API for pre-join dialog compatibility
+        try {
+            forceLoginFromProxyMethod = authmeAPI.getClass().getMethod("forceLoginFromProxy", String.class);
+            enablePreJoinSupport();
+        } catch (NoSuchMethodException ignored) {
+            forceLoginFromProxyMethod = null;
+        }
+    }
+
+    private void enablePreJoinSupport() {
+        try {
+            Class.forName("io.papermc.paper.event.connection.configuration.AsyncPlayerConnectionConfigureEvent");
+            Class<?> connection = Class.forName("io.papermc.paper.connection.PlayerConnection");
+            connection.getMethod("isConnected");
+            Class.forName("io.papermc.paper.connection.PlayerConfigurationConnection")
+                    .getMethod("sendPluginMessage", org.bukkit.plugin.Plugin.class, String.class, byte[].class);
+            org.bukkit.plugin.messaging.PluginMessageListener.class
+                    .getMethod("onPluginMessageReceived", String.class, connection, byte[].class);
+            AuthMePreJoinListener listener = new AuthMePreJoinListener(plugin, this);
+            plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+            if (plugin.getBungeeManager().isEnabled()) {
+                String channel = NamespaceKey.getCombined(plugin.getName(), PreJoinMessage.CHANNEL);
+                plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, channel, listener);
+                plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, channel);
+            }
+            plugin.getLog().info("Enabled AuthMe pre-join dialog compatibility");
+        } catch (ClassNotFoundException | NoSuchMethodException ignored) {
+            // Older Paper and Spigot keep the ordinary post-join flow.
+        }
+    }
+
+    public void forceLoginBeforeJoin(String playerName) throws ReflectiveOperationException {
+        forceLoginFromProxyMethod.invoke(authmeAPI, playerName);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -84,8 +124,22 @@ public class AuthMeHook implements AuthPlugin<Player>, Listener {
     @Override
     public boolean forceLogin(Player player) {
         if (authmeAPI.isAuthenticated(player)) {
+            // AuthMe may have consumed the pre-join request before our delayed task runs.
+            if (forceLoginFromProxyMethod != null) {
+                return true;
+            }
             plugin.getLog().warn(ALREADY_AUTHENTICATED, player);
             return false;
+        }
+
+        if (plugin.getBungeeManager().isEnabled() && forceLoginFromProxyMethod != null) {
+            try {
+                forceLoginBeforeJoin(player.getName());
+                return true;
+            } catch (ReflectiveOperationException ex) {
+                plugin.getLog().warn("Failed to invoke AuthMe forceLoginFromProxy for {}. "
+                        + "Falling back to standard forceLogin.", player.getName(), ex);
+            }
         }
 
         //skips registration and login

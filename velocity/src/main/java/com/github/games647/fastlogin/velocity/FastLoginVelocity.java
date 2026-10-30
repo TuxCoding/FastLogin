@@ -31,6 +31,7 @@ import com.github.games647.fastlogin.core.hooks.bedrock.GeyserService;
 import com.github.games647.fastlogin.core.message.ChangePremiumMessage;
 import com.github.games647.fastlogin.core.message.ChannelMessage;
 import com.github.games647.fastlogin.core.message.SuccessMessage;
+import com.github.games647.fastlogin.core.message.PreJoinMessage;
 import com.github.games647.fastlogin.core.scheduler.AsyncScheduler;
 import com.github.games647.fastlogin.core.shared.FastLoginCore;
 import com.github.games647.fastlogin.core.shared.PlatformPlugin;
@@ -115,6 +116,7 @@ public class FastLoginVelocity implements PlatformPlugin<CommandSource> {
         ChannelRegistrar channelRegistry = server.getChannelRegistrar();
         channelRegistry.register(MinecraftChannelIdentifier.create(getName(), ChangePremiumMessage.CHANGE_CHANNEL));
         channelRegistry.register(MinecraftChannelIdentifier.create(getName(), SuccessMessage.SUCCESS_CHANNEL));
+        channelRegistry.register(MinecraftChannelIdentifier.create(getName(), PreJoinMessage.CHANNEL));
     }
 
     @Subscribe

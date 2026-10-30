@@ -28,6 +28,8 @@ package com.github.games647.fastlogin.velocity.listener;
 import com.github.games647.fastlogin.core.hooks.bedrock.FloodgateService;
 import com.github.games647.fastlogin.core.message.ChangePremiumMessage;
 import com.github.games647.fastlogin.core.message.SuccessMessage;
+import com.github.games647.fastlogin.core.message.LoginActionMessage;
+import com.github.games647.fastlogin.core.message.PreJoinMessage;
 import com.github.games647.fastlogin.core.shared.FastLoginCore;
 import com.github.games647.fastlogin.core.storage.StoredProfile;
 import com.github.games647.fastlogin.velocity.FastLoginVelocity;
@@ -51,6 +53,7 @@ public class PluginMessageListener {
 
     private final String successChannel;
     private final String changeChannel;
+    private final String preJoinChannel;
 
     public PluginMessageListener(FastLoginVelocity plugin) {
         this.plugin = plugin;
@@ -58,6 +61,7 @@ public class PluginMessageListener {
         String prefix = plugin.getName();
         this.successChannel = MinecraftChannelIdentifier.create(prefix, SuccessMessage.SUCCESS_CHANNEL).getId();
         this.changeChannel = MinecraftChannelIdentifier.create(prefix, ChangePremiumMessage.CHANGE_CHANNEL).getId();
+        this.preJoinChannel = MinecraftChannelIdentifier.create(prefix, PreJoinMessage.CHANNEL).getId();
     }
 
     @Subscribe
@@ -76,11 +80,37 @@ public class PluginMessageListener {
             return;
         }
 
+        if (preJoinChannel.equals(channel)) {
+            onPreJoinRequest((ServerConnection) pluginMessageEvent.getSource(), pluginMessageEvent.getData());
+            return;
+        }
+
         //so that we can safely process this in the background
         byte[] data = Arrays.copyOf(pluginMessageEvent.getData(), pluginMessageEvent.getData().length);
         Player forPlayer = (Player) pluginMessageEvent.getTarget();
 
         plugin.getScheduler().runAsync(() -> readMessage(forPlayer, channel, data));
+    }
+
+    private void onPreJoinRequest(ServerConnection source, byte[] data) {
+        try {
+            PreJoinMessage request = new PreJoinMessage();
+            request.readFrom(ByteStreams.newDataInput(data));
+            if (request.getLoginAction() != null) {
+                return;
+            }
+            Player player = source.getPlayer();
+            VelocityLoginSession session = plugin.getSession().get(player.getRemoteAddress());
+            LoginActionMessage.Type type = LoginActionMessage.Type.CRACKED;
+            if (session != null && player.isOnlineMode()) {
+                type = session.needsRegistration() ? LoginActionMessage.Type.REGISTER : LoginActionMessage.Type.LOGIN;
+            }
+            LoginActionMessage action = new LoginActionMessage(type, player.getUsername(), plugin.getProxyId());
+            // Reply on this connection, not a random player connected to the same RegisteredServer.
+            plugin.sendPluginMessage(source, new PreJoinMessage(request.getRequestId(), action));
+        } catch (IllegalArgumentException | IllegalStateException | IndexOutOfBoundsException ex) {
+            plugin.getLog().debug("Ignoring malformed FastLogin pre-join request", ex);
+        }
     }
 
     private void readMessage(Player sender, String channel, byte[] data) {

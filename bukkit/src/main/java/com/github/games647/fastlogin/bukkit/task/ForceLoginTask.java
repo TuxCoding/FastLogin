@@ -74,7 +74,12 @@ public class ForceLoginTask extends ForceLoginManagement<Player, CommandSender, 
     @Override
     public FastLoginAutoLoginEvent callFastLoginAutoLoginEvent(LoginSession session, StoredProfile profile) {
         BukkitFastLoginAutoLoginEvent event = new BukkitFastLoginAutoLoginEvent(session, profile);
-        core.getPlugin().getServer().getPluginManager().callEvent(event);
+        Boolean preJoinAllowed = ((BukkitLoginSession) session).getPreJoinAutoLoginAllowed();
+        if (preJoinAllowed == null) {
+            core.getPlugin().getServer().getPluginManager().callEvent(event);
+        } else {
+            event.setCancelled(!preJoinAllowed);
+        }
         return event;
     }
 
