@@ -81,6 +81,34 @@ class PreJoinMessageListenerTest {
         verifyNoInteractions(server);
     }
 
+    @Test
+    void onlinePlayerWithoutSessionGetsCrackedReply() {
+        FastLoginVelocity plugin = mock(FastLoginVelocity.class, RETURNS_DEEP_STUBS);
+        when(plugin.getName()).thenReturn("fastlogin");
+        Player player = mock(Player.class);
+        when(player.getUsername()).thenReturn("PremiumPlayer");
+        when(player.isOnlineMode()).thenReturn(true);
+        when(player.getRemoteAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 23456));
+        when(plugin.getSession()).thenReturn(new ConcurrentHashMap<>());
+        when(plugin.getProxyId()).thenReturn(UUID.randomUUID());
+        ServerConnection source = mock(ServerConnection.class);
+        when(source.getPlayer()).thenReturn(player);
+        UUID requestId = UUID.randomUUID();
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        new PreJoinMessage(requestId, null).writeTo(output);
+        PluginMessageEvent event = new PluginMessageEvent(source, player,
+                MinecraftChannelIdentifier.from("fastlogin:prejoin"), output.toByteArray());
+
+        new PluginMessageListener(plugin).onPluginMessage(event);
+
+        ArgumentCaptor<PreJoinMessage> response = ArgumentCaptor.forClass(PreJoinMessage.class);
+        verify(plugin).sendPluginMessage(eq(source), response.capture());
+        assertFalse(event.getResult().isAllowed());
+        assertEquals(requestId, response.getValue().getRequestId());
+        assertEquals(LoginActionMessage.Type.CRACKED, response.getValue().getLoginAction().getType());
+        assertEquals(0, plugin.getSession().size());
+    }
+
     private void assertReply(boolean onlineMode, boolean registered, LoginActionMessage.Type expected) {
         FastLoginVelocity plugin = mock(FastLoginVelocity.class, RETURNS_DEEP_STUBS);
         when(plugin.getName()).thenReturn("fastlogin");

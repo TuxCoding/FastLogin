@@ -60,6 +60,7 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
     private final AuthMeHook hook;
     private final String channel;
     private final ConcurrentMap<PlayerConfigurationConnection, PendingRequest> pending = new ConcurrentHashMap<>();
+    private volatile boolean proxyUnresponsive;
 
     public AuthMePreJoinListener(FastLoginBukkit plugin, AuthMeHook hook) {
         this.plugin = plugin;
@@ -114,12 +115,16 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
             // Queue before AuthMe opens either the login or the registration dialog. Registration
             // and its IP limits still run through the normal FastLogin task after the player joins.
             hook.forceLoginBeforeJoin(name);
+            session.setPreJoinLoginQueued(true);
         } catch (ReflectiveOperationException ex) {
             plugin.getLog().warn("Could not prepare AuthMe pre-join login for {}", name, ex);
         }
     }
 
     private BukkitLoginSession requestProxySession(PlayerConfigurationConnection connection) {
+        if (proxyUnresponsive) {
+            return null;
+        }
         PendingRequest request = new PendingRequest();
         pending.put(connection, request);
         try {
@@ -137,7 +142,9 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         } catch (ExecutionException | TimeoutException ex) {
-            plugin.getLog().warn("No pre-join response from FastLogin proxy for {}; keeping AuthMe authentication",
+            proxyUnresponsive = true;
+            plugin.getLog().warn("No pre-join response from FastLogin proxy for {}; keeping AuthMe authentication "
+                            + "and skipping further pre-join requests until FastLogin restarts",
                     connection.getProfile().getName());
         } finally {
             pending.remove(connection, request);
@@ -167,6 +174,7 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
             if (request.id.equals(response.getRequestId()) && action != null
                     && action.getPlayerName().equals(name)
                     && plugin.getBungeeManager().isProxyAllowed(action.getProxyId())) {
+                proxyUnresponsive = false;
                 request.response.complete(action);
             }
         } catch (IllegalArgumentException | IllegalStateException | IndexOutOfBoundsException ex) {

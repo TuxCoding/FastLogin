@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -50,6 +51,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 class AuthMePreJoinListenerTest {
 
@@ -81,6 +87,15 @@ class AuthMePreJoinListenerTest {
     void verifiedPremiumSkipsDialogBeforeJoin() throws ReflectiveOperationException {
         listener.onConfigure(new AsyncPlayerConnectionConfigureEvent(connection));
         verify(hook).forceLoginBeforeJoin("PremiumPlayer");
+        assertTrue(session.isPreJoinLoginQueued());
+    }
+
+    @Test
+    void failedQueueDoesNotMarkSessionAsQueued() throws ReflectiveOperationException {
+        doThrow(new ReflectiveOperationException("queue unavailable")).when(hook)
+                .forceLoginBeforeJoin("PremiumPlayer");
+        listener.onConfigure(new AsyncPlayerConnectionConfigureEvent(connection));
+        assertFalse(session.isPreJoinLoginQueued());
     }
 
     @Test
@@ -151,6 +166,24 @@ class AuthMePreJoinListenerTest {
     }
 
     @Test
+    void validProxyResponsesKeepPreJoinEnabled() throws ReflectiveOperationException {
+        when(plugin.getBungeeManager().isEnabled()).thenReturn(true);
+        UUID allowedProxy = UUID.randomUUID();
+        when(plugin.getBungeeManager().isProxyAllowed(allowedProxy)).thenReturn(true);
+        doAnswer(invocation -> {
+            PreJoinMessage request = new PreJoinMessage();
+            request.readFrom(ByteStreams.newDataInput(invocation.<byte[]>getArgument(2)));
+            reply(connection, request.getRequestId(), allowedProxy, "PremiumPlayer");
+            return null;
+        }).when(connection).sendPluginMessage(eq(plugin), eq("fastlogin:prejoin"), any(byte[].class));
+
+        listener.onConfigure(new AsyncPlayerConnectionConfigureEvent(connection));
+        listener.onConfigure(new AsyncPlayerConnectionConfigureEvent(connection));
+
+        verify(hook, times(2)).forceLoginBeforeJoin("PremiumPlayer");
+    }
+
+    @Test
     void registrationCannotAuthenticateAnExistingAuthMeAccount() throws ReflectiveOperationException {
         when(plugin.getBungeeManager().isEnabled()).thenReturn(true);
         UUID allowedProxy = UUID.randomUUID();
@@ -190,6 +223,9 @@ class AuthMePreJoinListenerTest {
         PreJoinMessage message = new PreJoinMessage();
         message.readFrom(ByteStreams.newDataInput(request.getValue()));
         reply(connection, message.getRequestId(), allowedProxy, "PremiumPlayer");
+        assertTimeoutPreemptively(Duration.ofSeconds(1),
+                () -> listener.onConfigure(new AsyncPlayerConnectionConfigureEvent(connection)));
+        verify(connection).sendPluginMessage(eq(plugin), eq("fastlogin:prejoin"), any(byte[].class));
         verify(hook, never()).forceLoginBeforeJoin(anyString());
     }
 }

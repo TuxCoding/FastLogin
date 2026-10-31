@@ -80,6 +80,33 @@ class PreJoinMessageListenerTest {
         verifyNoInteractions(server);
     }
 
+    @Test
+    void onlinePlayerWithoutSessionGetsCrackedReply() {
+        FastLoginBungee plugin = mock(FastLoginBungee.class, RETURNS_DEEP_STUBS);
+        when(plugin.getName()).thenReturn("FastLogin");
+        ProxiedPlayer player = mock(ProxiedPlayer.class);
+        when(player.getName()).thenReturn("PremiumPlayer");
+        PendingConnection connection = mock(PendingConnection.class);
+        when(connection.isOnlineMode()).thenReturn(true);
+        when(player.getPendingConnection()).thenReturn(connection);
+        when(plugin.getSession()).thenReturn(new ConcurrentHashMap<>());
+        when(plugin.getProxy().getConfig().getUuid()).thenReturn(UUID.randomUUID().toString());
+        Server source = mock(Server.class);
+        UUID requestId = UUID.randomUUID();
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        new PreJoinMessage(requestId, null).writeTo(output);
+        PluginMessageEvent event = new PluginMessageEvent(source, player, "fastlogin:prejoin", output.toByteArray());
+
+        new PluginMessageListener(plugin).onPluginMessage(event);
+
+        ArgumentCaptor<PreJoinMessage> response = ArgumentCaptor.forClass(PreJoinMessage.class);
+        verify(plugin).sendPluginMessage(eq(source), response.capture());
+        assertTrue(event.isCancelled());
+        assertEquals(requestId, response.getValue().getRequestId());
+        assertEquals(LoginActionMessage.Type.CRACKED, response.getValue().getLoginAction().getType());
+        assertTrue(plugin.getSession().isEmpty());
+    }
+
     private void assertReply(boolean onlineMode, boolean registered, LoginActionMessage.Type expected) {
         FastLoginBungee plugin = mock(FastLoginBungee.class, RETURNS_DEEP_STUBS);
         when(plugin.getName()).thenReturn("FastLogin");

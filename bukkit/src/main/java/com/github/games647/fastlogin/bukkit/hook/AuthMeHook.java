@@ -175,7 +175,10 @@ public class AuthMeHook implements AuthPlugin<Player>, Listener {
     public boolean forceLogin(Player player) {
         if (authmeAPI.isAuthenticated(player)) {
             // AuthMe may have consumed the pre-join request before our delayed task runs.
-            if (preJoinLoginMethod != null) {
+            BukkitLoginSession session = preJoinLoginMethod == null ? null
+                    : plugin.getSession(player.spigot().getRawAddress());
+            if (session != null && session.isVerifiedPremium() && session.isPreJoinLoginQueued()
+                    && player.getName().equals(session.getUsername())) {
                 return true;
             }
             plugin.getLog().warn(ALREADY_AUTHENTICATED, player);

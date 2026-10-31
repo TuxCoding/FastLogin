@@ -26,6 +26,7 @@
 package com.github.games647.fastlogin.bukkit.hook;
 
 import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
+import com.github.games647.fastlogin.bukkit.BukkitLoginSession;
 import fr.xephi.authme.api.v3.AuthMeApi;
 import io.papermc.paper.connection.PlayerConfigurationConnection;
 import io.papermc.paper.event.connection.configuration.AsyncPlayerConnectionConfigureEvent;
@@ -43,6 +44,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.InetSocketAddress;
 import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -57,6 +59,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
@@ -89,9 +92,15 @@ class AuthMeHookTest {
             hook.forceLoginBeforeJoin("PremiumPlayer");
             verify((ProxyLoginApi) api).forceLoginFromProxy("PremiumPlayer");
 
-            Player player = mock(Player.class);
-            when(api.isAuthenticated(player)).thenReturn(true);
+            Player player = authenticatedPlayer(plugin, api, false);
+            assertFalse(hook.forceLogin(player));
+            plugin.getSession(player.spigot().getRawAddress()).setPreJoinLoginQueued(true);
             assertTrue(hook.forceLogin(player));
+
+            when(api.isAuthenticated(player)).thenReturn(false);
+            when(plugin.getBungeeManager().isEnabled()).thenReturn(true);
+            assertTrue(hook.forceLogin(player));
+            verify((ProxyLoginApi) api, times(2)).forceLoginFromProxy("PremiumPlayer");
         }
     }
 
@@ -116,8 +125,7 @@ class AuthMeHookTest {
             assertTrue(dialogListener.proxySessionManager.sessions.contains("premiumplayer"));
             assertFalse(dialogListener.proxySessionManager.sessions.contains("crackedplayer"));
 
-            Player player = mock(Player.class);
-            when(api.isAuthenticated(player)).thenReturn(true);
+            Player player = authenticatedPlayer(plugin, api, true);
             assertTrue(hook.forceLogin(player));
         } finally {
             handlers.unregister(registration);
@@ -201,6 +209,19 @@ class AuthMeHookTest {
                 handlers.unregister(registration);
             }
         }
+    }
+
+    private Player authenticatedPlayer(FastLoginBukkit plugin, AuthMeApi api, boolean queued) {
+        Player player = mock(Player.class, RETURNS_DEEP_STUBS);
+        when(player.getName()).thenReturn("PremiumPlayer");
+        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 12345);
+        when(player.spigot().getRawAddress()).thenReturn(address);
+        BukkitLoginSession session = new BukkitLoginSession("PremiumPlayer", true);
+        session.setVerifiedPremium(true);
+        session.setPreJoinLoginQueued(queued);
+        when(plugin.getSession(address)).thenReturn(session);
+        when(api.isAuthenticated(player)).thenReturn(true);
+        return player;
     }
 
     public static class LegacyDialogListener implements Listener {
