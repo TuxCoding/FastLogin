@@ -153,9 +153,7 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
             connection.sendPluginMessage(plugin, channel, output.toByteArray());
             LoginActionMessage action = request.response.get(5, TimeUnit.SECONDS);
             synchronized (this) {
-                if (proxyProbe == request) {
-                    proxyTimeoutNanos = null;
-                }
+                proxyTimeoutNanos = null;
             }
             if (action.getType() == LoginActionMessage.Type.CRACKED) {
                 return null;
