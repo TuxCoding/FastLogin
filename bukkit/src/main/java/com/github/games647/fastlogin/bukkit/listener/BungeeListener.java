@@ -123,6 +123,11 @@ public class BungeeListener implements PluginMessageListener {
     }
 
     private void startLoginTaskIfReady(Player player, BukkitLoginSession session) {
+        BukkitLoginSession existing = plugin.getSession(player.spigot().getRawAddress());
+        if (existing != null && existing.getUsername().equals(session.getUsername())
+                && existing.getPreJoinAutoLoginAllowed() != null) {
+            session = existing;
+        }
         session.setVerifiedPremium(true);
         plugin.putSession(player.spigot().getRawAddress(), session);
 

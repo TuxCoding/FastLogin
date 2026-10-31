@@ -168,7 +168,8 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.6-R0.1-SNAPSHOT</version>
+            <!-- configuration-phase plugin messages (PlayerConnection listener overload) -->
+            <version>1.21.11-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
             <!-- Use our own newer api version -->
             <exclusions>
@@ -396,6 +397,13 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
             <version>1.80</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- Required to load Paper's JavaPlugin methods in the hook integration tests. -->
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.24.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

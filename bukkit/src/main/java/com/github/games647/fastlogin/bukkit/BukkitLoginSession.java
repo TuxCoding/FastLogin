@@ -47,6 +47,8 @@ public class BukkitLoginSession extends LoginSession {
     private final ClientPublicKey clientPublicKey;
 
     private boolean verified;
+    private Boolean preJoinAutoLoginAllowed;
+    private boolean preJoinLoginQueued;
     private SkinProperty skinProperty;
 
     public BukkitLoginSession(String username, byte[] verifyToken, ClientPublicKey publicKey, boolean registered,
@@ -119,5 +121,21 @@ public class BukkitLoginSession extends LoginSession {
      */
     public synchronized boolean isVerifiedPremium() {
         return verified;
+    }
+
+    public synchronized Boolean getPreJoinAutoLoginAllowed() {
+        return preJoinAutoLoginAllowed;
+    }
+
+    public synchronized void setPreJoinAutoLoginAllowed(boolean allowed) {
+        this.preJoinAutoLoginAllowed = allowed;
+    }
+
+    public synchronized boolean isPreJoinLoginQueued() {
+        return preJoinLoginQueued;
+    }
+
+    public synchronized void setPreJoinLoginQueued(boolean queued) {
+        this.preJoinLoginQueued = queued;
     }
 }

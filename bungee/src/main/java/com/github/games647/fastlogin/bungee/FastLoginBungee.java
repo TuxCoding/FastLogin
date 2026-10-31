@@ -37,6 +37,7 @@ import com.github.games647.fastlogin.core.message.ChangePremiumMessage;
 import com.github.games647.fastlogin.core.message.ChannelMessage;
 import com.github.games647.fastlogin.core.message.NamespaceKey;
 import com.github.games647.fastlogin.core.message.SuccessMessage;
+import com.github.games647.fastlogin.core.message.PreJoinMessage;
 import com.github.games647.fastlogin.core.scheduler.AsyncScheduler;
 import com.github.games647.fastlogin.core.shared.FastLoginCore;
 import com.github.games647.fastlogin.core.shared.PlatformPlugin;
@@ -105,6 +106,7 @@ public class FastLoginBungee extends Plugin implements PlatformPlugin<CommandSen
         //this is required to listen to incoming messages from the server
         getProxy().registerChannel(NamespaceKey.getCombined(getName(), ChangePremiumMessage.CHANGE_CHANNEL));
         getProxy().registerChannel(NamespaceKey.getCombined(getName(), SuccessMessage.SUCCESS_CHANNEL));
+        getProxy().registerChannel(NamespaceKey.getCombined(getName(), PreJoinMessage.CHANNEL));
 
         registerHook();
     }

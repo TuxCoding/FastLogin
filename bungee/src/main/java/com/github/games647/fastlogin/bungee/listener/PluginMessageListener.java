@@ -32,6 +32,8 @@ import com.github.games647.fastlogin.core.hooks.bedrock.FloodgateService;
 import com.github.games647.fastlogin.core.message.ChangePremiumMessage;
 import com.github.games647.fastlogin.core.message.NamespaceKey;
 import com.github.games647.fastlogin.core.message.SuccessMessage;
+import com.github.games647.fastlogin.core.message.LoginActionMessage;
+import com.github.games647.fastlogin.core.message.PreJoinMessage;
 import com.github.games647.fastlogin.core.shared.FastLoginCore;
 import com.github.games647.fastlogin.core.storage.StoredProfile;
 import com.google.common.io.ByteArrayDataInput;
@@ -45,6 +47,7 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 public class PluginMessageListener implements Listener {
 
@@ -52,12 +55,14 @@ public class PluginMessageListener implements Listener {
 
     private final String successChannel;
     private final String changeChannel;
+    private final String preJoinChannel;
 
     public PluginMessageListener(FastLoginBungee plugin) {
         this.plugin = plugin;
 
         this.successChannel = new NamespaceKey(plugin.getName(), SuccessMessage.SUCCESS_CHANNEL).getCombinedName();
         this.changeChannel = new NamespaceKey(plugin.getName(), ChangePremiumMessage.CHANGE_CHANNEL).getCombinedName();
+        this.preJoinChannel = NamespaceKey.getCombined(plugin.getName(), PreJoinMessage.CHANNEL);
     }
 
     @EventHandler
@@ -76,11 +81,37 @@ public class PluginMessageListener implements Listener {
             return;
         }
 
+        if (preJoinChannel.equals(channel)) {
+            onPreJoinRequest((Server) pluginMessageEvent.getSender(),
+                    (ProxiedPlayer) pluginMessageEvent.getReceiver(), pluginMessageEvent.getData());
+            return;
+        }
+
         //so that we can safely process this in the background
         byte[] data = Arrays.copyOf(pluginMessageEvent.getData(), pluginMessageEvent.getData().length);
         ProxiedPlayer forPlayer = (ProxiedPlayer) pluginMessageEvent.getReceiver();
 
         plugin.getScheduler().runAsync(() -> readMessage(forPlayer, channel, data));
+    }
+
+    private void onPreJoinRequest(Server source, ProxiedPlayer player, byte[] data) {
+        try {
+            PreJoinMessage request = new PreJoinMessage();
+            request.readFrom(ByteStreams.newDataInput(data));
+            if (request.getLoginAction() != null) {
+                return;
+            }
+            BungeeLoginSession session = plugin.getSession().get(player.getPendingConnection());
+            LoginActionMessage.Type type = LoginActionMessage.Type.CRACKED;
+            if (session != null && player.getPendingConnection().isOnlineMode()) {
+                type = session.needsRegistration() ? LoginActionMessage.Type.REGISTER : LoginActionMessage.Type.LOGIN;
+            }
+            UUID proxyId = UUID.fromString(plugin.getProxy().getConfig().getUuid());
+            LoginActionMessage action = new LoginActionMessage(type, player.getName(), proxyId);
+            plugin.sendPluginMessage(source, new PreJoinMessage(request.getRequestId(), action));
+        } catch (IllegalArgumentException | IllegalStateException | IndexOutOfBoundsException ex) {
+            plugin.getLog().debug("Ignoring malformed FastLogin pre-join request", ex);
+        }
     }
 
     private void readMessage(ProxiedPlayer forPlayer, String channel, byte[] data) {
