@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.LongSupplier;
 
 /**
  * Runs before AuthMe's blocking configuration dialog. Only loaded on Paper versions with this API.
@@ -60,11 +61,18 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
     private final AuthMeHook hook;
     private final String channel;
     private final ConcurrentMap<PlayerConfigurationConnection, PendingRequest> pending = new ConcurrentHashMap<>();
-    private volatile boolean proxyUnresponsive;
+    private final LongSupplier nanoTime;
+    private Long proxyTimeoutNanos;
+    private PendingRequest proxyProbe;
 
     public AuthMePreJoinListener(FastLoginBukkit plugin, AuthMeHook hook) {
+        this(plugin, hook, System::nanoTime);
+    }
+
+    AuthMePreJoinListener(FastLoginBukkit plugin, AuthMeHook hook, LongSupplier nanoTime) {
         this.plugin = plugin;
         this.hook = hook;
+        this.nanoTime = nanoTime;
         this.channel = NamespaceKey.getCombined(plugin.getName(), PreJoinMessage.CHANNEL);
     }
 
@@ -121,17 +129,34 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
         }
     }
 
-    private BukkitLoginSession requestProxySession(PlayerConfigurationConnection connection) {
-        if (proxyUnresponsive) {
+    private synchronized PendingRequest createProxyRequest() {
+        if (proxyProbe != null || (proxyTimeoutNanos != null
+                && nanoTime.getAsLong() - proxyTimeoutNanos < TimeUnit.SECONDS.toNanos(30))) {
             return null;
         }
         PendingRequest request = new PendingRequest();
+        if (proxyTimeoutNanos != null) {
+            proxyProbe = request;
+        }
+        return request;
+    }
+
+    private BukkitLoginSession requestProxySession(PlayerConfigurationConnection connection) {
+        PendingRequest request = createProxyRequest();
+        if (request == null) {
+            return null;
+        }
         pending.put(connection, request);
         try {
             ByteArrayDataOutput output = ByteStreams.newDataOutput();
             new PreJoinMessage(request.id, null).writeTo(output);
             connection.sendPluginMessage(plugin, channel, output.toByteArray());
             LoginActionMessage action = request.response.get(5, TimeUnit.SECONDS);
+            synchronized (this) {
+                if (proxyProbe == request) {
+                    proxyTimeoutNanos = null;
+                }
+            }
             if (action.getType() == LoginActionMessage.Type.CRACKED) {
                 return null;
             }
@@ -142,12 +167,20 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         } catch (ExecutionException | TimeoutException ex) {
-            proxyUnresponsive = true;
+            request.response.cancel(false);
+            synchronized (this) {
+                proxyTimeoutNanos = nanoTime.getAsLong();
+            }
             plugin.getLog().warn("No pre-join response from FastLogin proxy for {}; keeping AuthMe authentication "
-                            + "and skipping further pre-join requests until FastLogin restarts",
+                            + "and skipping further pre-join requests for 30 seconds",
                     connection.getProfile().getName());
         } finally {
             pending.remove(connection, request);
+            synchronized (this) {
+                if (proxyProbe == request) {
+                    proxyProbe = null;
+                }
+            }
         }
         return null;
     }
@@ -174,7 +207,6 @@ public class AuthMePreJoinListener implements Listener, PluginMessageListener {
             if (request.id.equals(response.getRequestId()) && action != null
                     && action.getPlayerName().equals(name)
                     && plugin.getBungeeManager().isProxyAllowed(action.getProxyId())) {
-                proxyUnresponsive = false;
                 request.response.complete(action);
             }
         } catch (IllegalArgumentException | IllegalStateException | IndexOutOfBoundsException ex) {
