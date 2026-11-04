@@ -49,7 +49,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.geysermc.floodgate.api.FloodgateApi;
-import org.geysermc.geyser.GeyserImpl;
+import org.geysermc.geyser.api.GeyserApi;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -161,7 +161,7 @@ public class FastLoginBukkit extends JavaPlugin implements PlatformPlugin<Comman
 
     private boolean initializeFloodgate() {
         if (getServer().getPluginManager().getPlugin("Geyser-Spigot") != null) {
-            geyserService = new GeyserService(GeyserImpl.getInstance(), core);
+            geyserService = new GeyserService(GeyserApi.api(), core);
         }
 
         if (getServer().getPluginManager().getPlugin("floodgate") != null) {

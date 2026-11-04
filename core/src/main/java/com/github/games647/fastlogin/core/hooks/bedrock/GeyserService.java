@@ -27,33 +27,33 @@ package com.github.games647.fastlogin.core.hooks.bedrock;
 
 import com.github.games647.fastlogin.core.shared.FastLoginCore;
 import com.github.games647.fastlogin.core.shared.LoginSource;
-import org.geysermc.geyser.GeyserImpl;
+import org.geysermc.geyser.api.GeyserApi;
+import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.geysermc.geyser.api.network.AuthType;
-import org.geysermc.geyser.session.GeyserSession;
 
 import java.util.UUID;
 
-public class GeyserService extends BedrockService<GeyserSession> {
+public class GeyserService extends BedrockService<GeyserConnection> {
 
-    private final GeyserImpl geyser;
+    private final GeyserApi geyser;
     private final FastLoginCore<?, ?, ?> core;
-    private final AuthType authType;
 
-    public GeyserService(GeyserImpl geyser, FastLoginCore<?, ?, ?> core) {
+    public GeyserService(GeyserApi geyser, FastLoginCore<?, ?, ?> core) {
         super(core);
         this.geyser = geyser;
         this.core = core;
-        this.authType = GeyserImpl.getInstance().getConfig().getRemote().authType();
     }
 
     @Override
     public boolean performChecks(String username, LoginSource source) {
         // AuthType.FLOODGATE will be handled by FloodgateService
+        AuthType authType = geyser.defaultRemoteServer().authType();
         if (authType == AuthType.ONLINE) {
             // authenticate everyone, as if they were Java players, since they have signed
             // in through Mojang
             return false;
         }
+
         if ("true".equals(allowConflict)) {
             core.getPlugin().getLog().info("Skipping name conflict checking for player {}", username);
         } else {
@@ -63,17 +63,17 @@ public class GeyserService extends BedrockService<GeyserSession> {
     }
 
     @Override
-    public GeyserSession getBedrockPlayer(String username) {
-        for (GeyserSession gSess : geyser.getSessionManager().getAllSessions()) {
-            if (username.equals(gSess.getClientData().getUsername())) {
-                return gSess;
+    public GeyserConnection getBedrockPlayer(String username) {
+        for (GeyserConnection connection : geyser.onlineConnections()) {
+            if (username.equals(connection.name())) {
+                return connection;
             }
         }
         return null;
     }
 
     @Override
-    public GeyserSession getBedrockPlayer(UUID uuid) {
+    public GeyserConnection getBedrockPlayer(UUID uuid) {
         return geyser.connectionByUuid(uuid);
     }
 }
