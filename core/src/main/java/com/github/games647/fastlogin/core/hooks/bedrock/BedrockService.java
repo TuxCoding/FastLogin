@@ -35,10 +35,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * @param <B> is an instance of either FloodgatePlayer or GeyserSession
- */
-public abstract class BedrockService<B> {
+public abstract class BedrockService<GeyserConnection> {
 
     protected final FastLoginCore<?, ?, ?> core;
     protected final String allowConflict;
@@ -107,11 +104,11 @@ public abstract class BedrockService<B> {
      * @param prefixedUsername the name of the player with the prefix appended
      * @return Bedrock Player if found, null otherwise
      */
-    public B getBedrockPlayer(String prefixedUsername) {
+    public GeyserConnection getBedrockPlayer(String prefixedUsername) {
         return null;
     }
 
-    public B getBedrockPlayer(UUID uuid) {
+    public GeyserConnection getBedrockPlayer(UUID uuid) {
         return null;
     }
 
