@@ -53,7 +53,7 @@ import com.velocitypowered.api.proxy.messages.ChannelRegistrar;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.geysermc.floodgate.api.FloodgateApi;
-import org.geysermc.geyser.GeyserImpl;
+import org.geysermc.geyser.api.GeyserApi;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -106,7 +106,7 @@ public class FastLoginVelocity implements PlatformPlugin<CommandSource> {
         }
 
         if (isPluginInstalled("Geyser-Velocity")) {
-            geyserService = new GeyserService(GeyserImpl.getInstance(), core);
+            geyserService = new GeyserService(GeyserApi.api(), core);
         }
 
         server.getEventManager().register(this, new ConnectListener(this, core.getAntiBotService()));
